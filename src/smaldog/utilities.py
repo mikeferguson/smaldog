@@ -18,7 +18,7 @@
 
 ## @file utilities.py Functions for conversion between servo/radian values.
 
-from math import pi
+import ax12
 
 ## @brief Convert radians to servo position offset.
 def radToServoAX12(rads):
@@ -32,7 +32,6 @@ def convertToAX12(values, robot):
               robot.RR_COXA, robot.RR_FEMUR, robot.RR_TIBIA,
               robot.LF_COXA, robot.LF_FEMUR, robot.LF_TIBIA,
               robot.LR_COXA, robot.LR_FEMUR, robot.LR_TIBIA]
-    print servos
 
     for i in range(12):
         s = robot.neutrals[servos[i]-1] + robot.signs[servos[i]-1] * radToServoAX12(values[i])
@@ -42,3 +41,15 @@ def convertToAX12(values, robot):
             pass
 
     return sol
+
+## @brief Get sync write packet
+## @param positions Values for servos 1 to n
+def makeSyncWritePacket(positions):
+    output = list()
+    output.append(ax12.P_GOAL_POSITION_L)
+    output.append(2)
+    for i in range(len(positions)):
+        output.append(i+1) # id
+        output.append(positions[i]&0xff)
+        output.append((positions[i]>>8)&0xff)
+    return output
