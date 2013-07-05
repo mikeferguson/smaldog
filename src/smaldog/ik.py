@@ -96,7 +96,7 @@ class MammalIK:
             d4 = 2 * robot.L_TIBIA * robot.L_FEMUR
             ans[2] = pi - acos(d3/d4)
         except Exception as e:
-            print e
+            pass #print e
 
         # return leg angles
         return ans
