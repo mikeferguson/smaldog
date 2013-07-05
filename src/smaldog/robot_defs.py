@@ -23,21 +23,21 @@ class SMALdog:
     mins =     [152, 450,   1,  336, 193, 160, 450, 231,  323,   1, 159, 192]
     maxs =     [575, 868, 689, 1023, 857, 824, 813, 575, 1023, 683, 819, 855]
     neutrals = [512, 512, 442,  582, 302, 722, 512, 512,  582, 442, 722, 302]
-    signs =    [ -1,   1,   1,    -1,  1,  -1,   1,  -1,   -1,   1,  -1,   1]
+    signs =    [ -1,   1,  -1,    1,   1,  -1,   1,  -1,    1,  -1,  -1,   1]
 
     # Servo ID's
-    RF_COXA = 1
-    RF_FEMUR = 3
-    RF_TIBIA = 5
-    LF_COXA = 2
-    LF_FEMUR = 4
-    LF_TIBIA = 6
-    RR_COXA = 7
-    RR_FEMUR = 9
-    RR_TIBIA = 11
-    LR_COXA = 8
-    LR_FEMUR = 10
-    LR_TIBIA = 12
+    RF_COXA = 1     # -
+    LF_COXA = 2     # +
+    RF_FEMUR = 3    # -
+    LF_FEMUR = 4    # +
+    RF_TIBIA = 5    # +
+    LF_TIBIA = 6    # -
+    RR_COXA = 7     # +
+    LR_COXA = 8     # -
+    RR_FEMUR = 9    # +
+    LR_FEMUR = 10   # -
+    RR_TIBIA = 11   # -
+    LR_TIBIA = 12   # +
 
     X_COXA = 0.086      # Meters between front and back legs /2
     Y_COXA = 0.019      # Meters between front/back legs /2
