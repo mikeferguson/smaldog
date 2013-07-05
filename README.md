@@ -7,3 +7,4 @@ This is the PC-side code (firmware is in the stm32 repo under projects).
  * Get IMU interfaced
  * Convert drivers, interpolation to C++ (boost::asio)
  * Probably convert IK to C++
+ * Find old pylab based tools and check in
