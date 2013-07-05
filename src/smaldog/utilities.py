@@ -29,8 +29,8 @@ def convertToAX12(values, robot):
     sol = [-1 for i in range(12)]
 
     servos = [robot.RF_COXA, robot.RF_FEMUR, robot.RF_TIBIA,
-              robot.LF_COXA, robot.LF_FEMUR, robot.LF_TIBIA,
               robot.RR_COXA, robot.RR_FEMUR, robot.RR_TIBIA,
+              robot.LF_COXA, robot.LF_FEMUR, robot.LF_TIBIA,
               robot.LR_COXA, robot.LR_FEMUR, robot.LR_TIBIA]
     print servos
 
