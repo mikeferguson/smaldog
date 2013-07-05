@@ -1,4 +1,5 @@
 #SMALdog v1.5 (Eth-bridge Based)
+This is the PC-side code (firmware is in the stm32 repo under projects).
 
 #Road Map
  * Initial Python implementation of drivers, IK, interpolation (mostly done)
