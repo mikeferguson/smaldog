@@ -44,5 +44,5 @@ class SMALdog:
 
     L_COXA = 0.050      # Meters distance from coxa servo to femur servo 
     L_FEMUR = 0.064     # Meters distance from femur servo to tibia servo 
-    L_TIBIA = 0.105     # Meters distance from tibia servo to foot
+    L_TIBIA = 0.086     # Meters distance from tibia servo to foot
 
