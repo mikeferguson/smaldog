@@ -22,7 +22,7 @@
   <link name="lf_femur_link">
   </link>
   <joint name="lf_tibia_joint" type="revolute">
-    <axis xyz="0 1 0" />
+    <axis xyz="0 -1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="lf_femur_link"/>
@@ -30,9 +30,9 @@
   </joint>
   <link name="lf_tibia_link">
     <visual>
-      <origin xyz="0.0 0.0 -0.0525" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 -0.043" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.00635" length="0.105"/>
+        <cylinder radius="0.00635" length="0.086"/>
       </geometry>
     </visual>
   </link>
@@ -47,7 +47,7 @@
   <link name="lr_coxa_link">
   </link>
   <joint name="lr_femur_joint" type="revolute">
-    <axis xyz="0 1 0" />
+    <axis xyz="0 -1 0" />
     <origin xyz="0 0.050 0" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="lr_coxa_link"/>
@@ -64,15 +64,15 @@
   </joint>
   <link name="lr_tibia_link">
     <visual>
-      <origin xyz="0.0 0.0 -0.0525" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 -0.043" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.00635" length="0.105"/>
+        <cylinder radius="0.00635" length="0.086"/>
       </geometry>
     </visual>
   </link>
 
   <joint name="rf_coxa_joint" type="revolute">
-    <axis xyz="1 0 0" />
+    <axis xyz="-1 0 0" />
     <origin xyz="0.086 -0.019 0" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="body_link"/>
@@ -90,7 +90,7 @@
   <link name="rf_femur_link">
   </link>
   <joint name="rf_tibia_joint" type="revolute">
-    <axis xyz="0 1 0" />
+    <axis xyz="0 -1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="rf_femur_link"/>
@@ -98,15 +98,15 @@
   </joint>
   <link name="rf_tibia_link">
     <visual>
-      <origin xyz="0.0 0.0 -0.0525" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 -0.043" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.00635" length="0.105"/>
+        <cylinder radius="0.00635" length="0.086"/>
       </geometry>
     </visual>
   </link>
 
   <joint name="rr_coxa_joint" type="revolute">
-    <axis xyz="1 0 0" />
+    <axis xyz="-1 0 0" />
     <origin xyz="-0.086 -0.019 0" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="body_link"/>
@@ -115,7 +115,7 @@
   <link name="rr_coxa_link">
   </link>
   <joint name="rr_femur_joint" type="revolute">
-    <axis xyz="0 1 0" />
+    <axis xyz="0 -1 0" />
     <origin xyz="0 -0.050 0" rpy="0 0 0"/>
     <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
     <parent link="rr_coxa_link"/>
@@ -132,9 +132,9 @@
   </joint>
   <link name="rr_tibia_link">
     <visual>
-      <origin xyz="0.0 0.0 -0.0525" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 -0.043" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.00635" length="0.105"/>
+        <cylinder radius="0.00635" length="0.086"/>
       </geometry>
     </visual>
   </link>
