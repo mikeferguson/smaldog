@@ -1,0 +1,14 @@
+<launch>
+    <!-- groovy, was global -->
+    <param name="use_gui" value="true"/>
+
+    <param name="robot_description" command="cat $(find smaldog)/urdf/smaldog.urdf" />
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <!-- in hydro, this became local param -->
+      <param name="use_gui" value="true"/>
+    </node>
+
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+    
+</launch>
