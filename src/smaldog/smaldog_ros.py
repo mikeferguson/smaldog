@@ -55,3 +55,7 @@ while not rospy.is_shutdown():
         pub.publish(msg)
         r.sleep()
     start_pose = next_pose
+
+# TODO: command velocity
+# TODO: tf between body_link and base_link
+# TODO: odometry between base_link and odom
