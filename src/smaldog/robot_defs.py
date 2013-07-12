@@ -26,23 +26,23 @@ class SMALdog:
     signs =    [ -1,   1,  -1,    1,   1,  -1,   1,  -1,    1,  -1,  -1,   1]
 
     # Servo ID's
-    RF_COXA = 1     # -
-    LF_COXA = 2     # +
-    RF_FEMUR = 3    # -
-    LF_FEMUR = 4    # +
-    RF_TIBIA = 5    # +
-    LF_TIBIA = 6    # -
-    RR_COXA = 7     # +
-    LR_COXA = 8     # -
-    RR_FEMUR = 9    # +
-    LR_FEMUR = 10   # -
-    RR_TIBIA = 11   # -
-    LR_TIBIA = 12   # +
+    RF_PITCH = 1    # -
+    LF_PITCH = 2    # +
+    RF_FLEX = 3     # -
+    LF_FLEX = 4     # +
+    RF_KNEE = 5     # +
+    LF_KNEE = 6     # -
+    RR_PITCH = 7    # +
+    LR_PITCH = 8    # -
+    RR_FLEX = 9     # +
+    LR_FLEX = 10    # -
+    RR_KNEE = 11    # -
+    LR_KNEE = 12    # +
 
-    X_COXA = 0.086      # Meters between front and back legs /2
-    Y_COXA = 0.019      # Meters between front/back legs /2
+    X_SHOULDER = 0.086  # Meters between front and back legs /2
+    Y_SHOULDER = 0.019  # Meters between front/back legs /2
 
-    L_COXA = 0.050      # Meters distance from coxa servo to femur servo 
-    L_FEMUR = 0.064     # Meters distance from femur servo to tibia servo 
-    L_TIBIA = 0.086     # Meters distance from tibia servo to foot
+    L_SHOULDER = 0.050  # Meters distance from shoulder pitch servo to shoulder flex servo
+    L_FEMUR = 0.064     # Meters distance from flex servo to knee servo
+    L_TIBIA = 0.086     # Meters distance from knee servo to foot
 
