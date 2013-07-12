@@ -20,24 +20,16 @@
 
 class SMALdog:
     servo_res = 1024
+    names =    ["rf_pitch_joint", "lf_pitch_joint",
+                "rf_flex_joint", "lf_flex_joint",
+                "rf_knee_joint", "lf_knee_joint",
+                "rr_pitch_joint", "lr_pitch_joint",
+                "rr_flex_joint", "lr_flex_joint",
+                "rr_knee_joint", "lr_knee_joint"]
     mins =     [152, 450,   1,  336, 193, 160, 450, 231,  323,   1, 159, 192]
     maxs =     [575, 868, 689, 1023, 857, 824, 813, 575, 1023, 683, 819, 855]
     neutrals = [512, 512, 442,  582, 302, 722, 512, 512,  582, 442, 722, 302]
     signs =    [ -1,   1,  -1,    1,   1,  -1,   1,  -1,    1,  -1,  -1,   1]
-
-    # Servo ID's
-    RF_PITCH = 1    # -
-    LF_PITCH = 2    # +
-    RF_FLEX = 3     # -
-    LF_FLEX = 4     # +
-    RF_KNEE = 5     # +
-    LF_KNEE = 6     # -
-    RR_PITCH = 7    # +
-    LR_PITCH = 8    # -
-    RR_FLEX = 9     # +
-    LR_FLEX = 10    # -
-    RR_KNEE = 11    # -
-    LR_KNEE = 12    # +
 
     X_SHOULDER = 0.086  # Meters between front and back legs /2
     Y_SHOULDER = 0.019  # Meters between front/back legs /2
@@ -45,4 +37,3 @@ class SMALdog:
     L_SHOULDER = 0.050  # Meters distance from shoulder pitch servo to shoulder flex servo
     L_FEMUR = 0.064     # Meters distance from flex servo to knee servo
     L_TIBIA = 0.086     # Meters distance from knee servo to foot
-
