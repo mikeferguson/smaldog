@@ -45,7 +45,6 @@ class LegIK:
     ## @param Z Position downward from the center of mass (in meters).
     ## @returns Joint angles in radians
     def getIK(self, X, Y, Z, bodyR=0.0, bodyP=0.0, bodyY=0.0):
-        print X, Y, Z
         angles = dict()
         angles[self.name + "_pitch_joint"] = float('nan')
         angles[self.name + "_flex_joint"] = float('nan')
@@ -62,8 +61,6 @@ class LegIK:
                          self.SHOULDER_X*sinY + self.SHOULDER_Y*cosY*cosR,
                          self.SHOULDER_Y*sinR - self.SHOULDER_X*sinP ] # X, Y, Z
         
-        print shoulder_pos
-
         # The remainder of this is in quadrant 1, need to convert to that
         if self.SHOULDER_X > 0:
             X = X - shoulder_pos[0]
@@ -73,8 +70,6 @@ class LegIK:
             Y = Y - shoulder_pos[1]
         else:
             Y = -(Y - shoulder_pos[1])
-
-        print X, Y, -Z
 
         try:
             # first, make this a 2DOF problem... by solving shoulder
