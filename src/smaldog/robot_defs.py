@@ -19,7 +19,39 @@
 ## @file robot_defs.py Robot-specific information.
 
 from leg_ik import *
+import ax12
 
+## @brief Convert radians to servo position offset.
+def radToServoAX12(rads):
+    return int((rads/5.235987755982989) * 1024)
+
+## @brief Convert radians to servo ticks, apply neutrals, check limits.
+def convertToAX12(values, robot):
+    sol = [-1 for i in range(12)]
+
+    for i in range(12):
+        name = robot.names[i]
+        s = robot.neutrals[i] + robot.signs[i] * radToServoAX12(values[name])
+        if s < robot.maxs[i] and s > robot.mins[i]:
+            sol[i] = s
+        else:
+            pass
+
+    return sol
+
+## @brief Get sync write packet
+## @param positions Values for servos 1 to n
+def makeSyncWritePacket(positions):
+    output = list()
+    output.append(ax12.P_GOAL_POSITION_L)
+    output.append(2)
+    for i in range(len(positions)):
+        output.append(i+1) # id
+        output.append(positions[i]&0xff)
+        output.append((positions[i]>>8)&0xff)
+    return output
+
+## @brief The definitions for robot geometry and layout
 class SMALdog:
     servo_res = 1024
     names =    ["rf_pitch_joint", "lf_pitch_joint",

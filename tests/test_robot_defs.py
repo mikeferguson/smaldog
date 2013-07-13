@@ -1,10 +1,9 @@
 import os
 import unittest
 
-from smaldog.utilities import *
 from smaldog.robot_defs import *
 
-class UtilitiesTest(unittest.TestCase):
+class RobotDefsTest(unittest.TestCase):
 
     def test_neutral(self):
         defs = SMALdog()
