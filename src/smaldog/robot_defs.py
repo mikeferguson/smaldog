@@ -18,6 +18,8 @@
 
 ## @file robot_defs.py Robot-specific information.
 
+from leg_ik import *
+
 class SMALdog:
     servo_res = 1024
     names =    ["rf_pitch_joint", "lf_pitch_joint",
@@ -44,3 +46,12 @@ class SMALdog:
     L_SHOULDER = 0.050  # Meters distance from shoulder pitch servo to shoulder flex servo
     L_FEMUR = 0.065     # Meters distance from flex servo to knee servo (from CAD)
     L_TIBIA = 0.088     # Meters distance from knee servo to foot (from CAD)
+
+    def __init__(self):
+        # initialize IK solvers for each leg
+        self.ik = dict()
+        self.ik["lf"] = LegIK("lf", self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+        self.ik["rf"] = LegIK("rf", self.X_SHOULDER, -self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+        self.ik["lr"] = LegIK("lr", -self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+        self.ik["rr"] = LegIK("rr", -self.X_SHOULDER, -self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+
