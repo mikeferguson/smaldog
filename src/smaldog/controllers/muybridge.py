@@ -21,15 +21,15 @@
 import copy
 from smaldog.geometry import *
 
-## @brief The standard gait controller, with some thoughts from Rebula et al, 2007
+## @brief The standard gait controller. Implements a simple fixed gait
+## which shifts the body only while all feet are on the ground.
 class MuybridgeGaitController:
-    legs = ["rf", "rr", "lf", "lr"]
-    standard_time = 0.25
+    standard_time = 0.2
     # indexes of points cross legs, first 2 are diagonal to leg
-    cross_poses = [ [1, 2, 3],
-                    [0, 3, 2],
-                    [0, 3, 1],
-                    [2, 1, 0] ]
+    cross_poses = [ [3, 2, 1],
+                    [2, 3, 0],
+                    [0, 1, 3],
+                    [0, 1, 2] ]
     # pose of body in 2d space
     x = 0
     y = 0
@@ -61,7 +61,6 @@ class MuybridgeGaitController:
         self.phase_count = 4
 
         self.lift = 0.02 # height to lift foot
-        self.step_time = 0.25 # time to complete a step (1 full cycle/sec)
         self.stability = 0.01
 
         self.swing_leg = None
@@ -94,45 +93,34 @@ class MuybridgeGaitController:
         phase_time = self.standard_time  # might want to modify phase_time for some shifts?
 
         if self.phase == self.QUAD_SHIFT:
-            # Has direction changed?
-            dir_changed = self.compareDirections(x_vel, y_vel, r_vel, self.last_x_vel, self.last_y_vel, self.last_r_vel)
             # Update velocities (stow for duration of this cycle)
             self.last_x_vel = x_vel
             self.last_y_vel = y_vel
             self.last_r_vel = r_vel
             # Do setup of choosing which leg is the swing leg
-            swing_leg = self.computeSwingLeg(self.last_pose, self.swing_leg, dir_changed)
-            if swing_leg == None:
-                dists = list()
-                offsets = list()
-                # Need to do a quad shift, iterate through legs to find best choice
-                for i in range(4):
-                    new_pose = copy.deepcopy(self.last_pose)
-                    points = [new_pose[k] for k in self.cross_poses[i]]
-                    offset = self.stableQuadShift(points[0], points[1], points[2])
-                    offsets.append(offset)
-                    for j in range(4):
-                        new_pose[j][0] -= offset[0]
-                        new_pose[j][1] -= offset[1]
-                    vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
-                    dist = self.getMaxDist(self.robot.ik[self.legs[i]], new_pose[i], vector)
-                    dists.append(dist)
-                
-                self.swing_leg = dists.index(max(dists))
-                print "Swing leg is", self.legs[self.swing_leg], "doing shift of", offsets[self.swing_leg]
-                # Apply shift
+            if self.swing_leg == None:
+                self.swing_leg = 0
+            else:
+                self.swing_leg = (self.swing_leg + 1) % 4;
+            # Check if we need to shift
+            points = [self.last_pose[k] for k in self.cross_poses[self.swing_leg]]
+            isostable = reduceTriangle(points[0], points[1], points[2], self.stability)
+            if not insideTriangle([0,0], isostable[0], isostable[1], isostable[2]):
+                #offset = self.stableQuadShift(points[0], points[1], points[2])
+                offset = self.fastQuadShift(points[0], points[1], points[2], self.stability*1.5)
                 for j in range(4):
-                    self.last_pose[j][0] -= offsets[self.swing_leg][0]
-                    self.last_pose[j][1] -= offsets[self.swing_leg][1]
-                self.x += offsets[self.swing_leg][0]
-                self.y += offsets[self.swing_leg][1]
+                    self.last_pose[j][0] -= offset[0]
+                    self.last_pose[j][1] -= offset[1]
+                self.x += offset[0]
+                self.y += offset[1]
                 # TODO r
+                shift_time = (lengthLine([0,0], offset) / 0.08) # 8cm/s
+                print "Swing leg is", self.robot.legs[self.swing_leg], "doing shift of", offset, "in time of", shift_time
                 self.phase = self.SWING_LIFT
-                return [1.0, self.last_pose]
-            # We have a swing leg, and no need to quad shift
-            self.swing_leg = swing_leg
+                return [shift_time, self.last_pose]
+            # No need to quad shift
             self.phase = self.SWING_LIFT
-            print "Swing leg is", self.legs[self.swing_leg]
+            print "Swing leg is", self.robot.legs[self.swing_leg]
 
         if self.phase == self.SWING_LIFT:
             # Swing leg is computed, raise it
@@ -141,34 +129,13 @@ class MuybridgeGaitController:
         elif self.phase == self.SWING_FORWARD:
             # Move swing leg forward
             vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
-            mag = self.getMaxDist(self.robot.ik[self.legs[self.swing_leg]], self.last_pose[self.swing_leg], vector)
+            mag = self.getMaxDist(self.robot.ik[self.robot.legs[self.swing_leg]], self.last_pose[self.swing_leg], vector)
             if mag > 1.0:
                 mag = 1.0
             update = [v*mag for v in vector]
+            print "Swinging", self.robot.legs[self.swing_leg], "distance of", lengthLine([0,0], update)
             for i in range(len(update)):
                 self.last_pose[self.swing_leg][i] += update[i]
-
-            # Compute shift of body, apply to all legs
-            if self.swing_leg == 1 or self.swing_leg == 3:
-                # For hind legs, shift halfway to the midpoint of the front stability boundary
-                pts = [self.last_pose[k] for k in self.cross_poses[self.swing_leg]]
-                isostable = reduceTriangle(pts[0], pts[1], pts[2], self.stability)
-                front_mid = midwayLine(isostable[0], isostable[2])
-                offset = midwayLine([0,0], front_mid)
-                print "  hind leg causes body shift of", offset
-            else:
-                # For front legs, shift to the midpoint of the front stability boundary
-                pts = [self.last_pose[k] for k in self.cross_poses[self.swing_leg]]
-                isostable = reduceTriangle(pts[0], pts[1], pts[2], 0.01)
-                front_mid = midwayLine(isostable[0], isostable[1])
-                offset = midwayLine([0,0], front_mid)
-            #for j in range(4): #self.cross_poses[self.swing_leg]:
-                # TODO: we should compute body shift first, so we get max movement
-            #    self.last_pose[j][0] -= offset[0]
-            #    self.last_pose[j][1] -= offset[1]
-            #self.x += offset[0]
-            #self.y += offset[1]
-            # TODO r
 
         else: # DROP
             self.last_pose[self.swing_leg][2] -= self.lift
@@ -208,42 +175,9 @@ class MuybridgeGaitController:
         for v in range(500):
             d_ = 0.01 * (v+1)
             vec = [d_*val for val in vector]
-            res = ik_eval.getIK(pose[0] + vec[0], pose[1] + vec[1], pose[2]) #, self.roll, self.pitch, self.yaw)x
+            res = ik_eval.getIK(pose[0] + vec[0], pose[1] + vec[1], pose[2]) #, self.roll, self.pitch, self.yaw)
             if not self.robot.checkLimits(res):
                 break
             d = d_
         return d
-
-    ## @brief Compute the next swing leg to use
-    ## @param poses The poses of the legs
-    ## @param prev_swing The previous swing leg.
-    ## @param dir_changed Has the direction changed since last cycle?
-    def computeSwingLeg(self, poses, prev_swing, dir_changed):
-        # Which legs can be a swing leg?
-        candidates = list()
-        for i in range(4):
-            # If no direction change, remove previous swing leg from option
-            if self.swing_leg == i and not dir_changed:
-                continue
-            # Test if support polygon is OK
-            pts = [poses[j] for j in self.cross_poses[i]]
-            iso = reduceTriangle(pts[0], pts[1], pts[2], self.stability)
-            if insideTriangle([0,0], iso[0], iso[1], iso[2]):
-                print "      ", self.legs[i], "is candidate"
-                #candidates.append(i)
-        # Of the candidates, which can go the farthest?
-        max_dist = list()
-        for c in candidates:
-            vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
-            max_dist.append(self.getMaxDist(self.robot.ik[self.legs[c]], poses[c], vector))
-        if len(max_dist) == 0:
-            return None
-        if max(max_dist) < 0.001:
-            return None
-        return candidates[max_dist.index(max(max_dist))]
-
-    ## @brief Determine if the direction of desired velocity has changed
-    def compareDirections(self, x1, y1, r1, x2, y2, r2):
-        # TODO
-        return False
 
