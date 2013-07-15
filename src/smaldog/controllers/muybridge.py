@@ -29,7 +29,7 @@ class MuybridgeGaitController:
     cross_poses = [ [1, 2, 3],
                     [0, 3, 2],
                     [0, 3, 1],
-                    [1, 2, 0] ]
+                    [2, 1, 0] ]
     # pose of body in 2d space
     x = 0
     y = 0
@@ -62,6 +62,7 @@ class MuybridgeGaitController:
 
         self.lift = 0.02 # height to lift foot
         self.step_time = 0.25 # time to complete a step (1 full cycle/sec)
+        self.stability = 0.01
 
         self.swing_leg = None
 
@@ -77,13 +78,11 @@ class MuybridgeGaitController:
         # Are we not moving?
         if abs(x_vel) < 0.001 and abs(y_vel) < 0.001 and abs(r_vel) < 0.001:
             if self.phase == self.SWING_FORWARD:
-                print "FORWARD: Not moving, setting foot down."
                 # put that foot down, but go back to lift so that when we start walking we use it
                 self.last_pose[self.swing_leg][2] -= self.lift
                 self.phase = self.SWING_LIFT
                 return [self.standard_time, self.last_pose]
             elif self.phase == self.SWING_DROP:
-                print "DROP: Not moving, setting foot down."
                 # put foot down, go to quad shift
                 self.last_pose[self.swing_leg][2] -= self.lift
                 self.phase = self.QUAD_SHIFT
@@ -104,27 +103,23 @@ class MuybridgeGaitController:
             # Do setup of choosing which leg is the swing leg
             swing_leg = self.computeSwingLeg(self.last_pose, self.swing_leg, dir_changed)
             if swing_leg == None:
-                print "No swing leg found, shifting..."
                 dists = list()
                 offsets = list()
                 # Need to do a quad shift, iterate through legs to find best choice
                 for i in range(4):
-                    print "  evaluating", self.legs[i]
                     new_pose = copy.deepcopy(self.last_pose)
                     points = [new_pose[k] for k in self.cross_poses[i]]
-                    offset = self.fastQuadShift(points[0], points[1], points[2], 0.01)
-                    print "    offset of", offset
+                    offset = self.stableQuadShift(points[0], points[1], points[2])
                     offsets.append(offset)
                     for j in range(4):
                         new_pose[j][0] -= offset[0]
                         new_pose[j][1] -= offset[1]
                     vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
                     dist = self.getMaxDist(self.robot.ik[self.legs[i]], new_pose[i], vector)
-                    print "    allows movement of", dist
                     dists.append(dist)
                 
                 self.swing_leg = dists.index(max(dists))
-                print "Swing leg is", self.legs[self.swing_leg] 
+                print "Swing leg is", self.legs[self.swing_leg], "doing shift of", offsets[self.swing_leg]
                 # Apply shift
                 for j in range(4):
                     self.last_pose[j][0] -= offsets[self.swing_leg][0]
@@ -133,7 +128,7 @@ class MuybridgeGaitController:
                 self.y += offsets[self.swing_leg][1]
                 # TODO r
                 self.phase = self.SWING_LIFT
-                return [phase_time, self.last_pose]
+                return [1.0, self.last_pose]
             # We have a swing leg, and no need to quad shift
             self.swing_leg = swing_leg
             self.phase = self.SWING_LIFT
@@ -142,17 +137,14 @@ class MuybridgeGaitController:
         if self.phase == self.SWING_LIFT:
             # Swing leg is computed, raise it
             self.last_pose[self.swing_leg][2] += self.lift
-            print "Lifting", self.legs[self.swing_leg]
 
         elif self.phase == self.SWING_FORWARD:
-            print "Moving", self.legs[self.swing_leg], "forward"
             # Move swing leg forward
             vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
             mag = self.getMaxDist(self.robot.ik[self.legs[self.swing_leg]], self.last_pose[self.swing_leg], vector)
             if mag > 1.0:
                 mag = 1.0
             update = [v*mag for v in vector]
-            print "  leg movement is", update
             for i in range(len(update)):
                 self.last_pose[self.swing_leg][i] += update[i]
 
@@ -160,7 +152,7 @@ class MuybridgeGaitController:
             if self.swing_leg == 1 or self.swing_leg == 3:
                 # For hind legs, shift halfway to the midpoint of the front stability boundary
                 pts = [self.last_pose[k] for k in self.cross_poses[self.swing_leg]]
-                isostable = reduceTriangle(pts[0], pts[1], pts[2], 0.01)
+                isostable = reduceTriangle(pts[0], pts[1], pts[2], self.stability)
                 front_mid = midwayLine(isostable[0], isostable[2])
                 offset = midwayLine([0,0], front_mid)
                 print "  hind leg causes body shift of", offset
@@ -168,22 +160,17 @@ class MuybridgeGaitController:
                 # For front legs, shift to the midpoint of the front stability boundary
                 pts = [self.last_pose[k] for k in self.cross_poses[self.swing_leg]]
                 isostable = reduceTriangle(pts[0], pts[1], pts[2], 0.01)
-                print "  isostable", isostable
-                print "  center of isostable", centroidTriangle(isostable[0], isostable[1], isostable[2])
-                print "  midpoint (back)", midwayLine(isostable[0], isostable[2])
-                print "           (side)", midwayLine(isostable[1], isostable[2])
-                offset = midwayLine(isostable[0], isostable[1])
-                print "  front leg causes body shift of", offset
-            for j in range(4): #self.cross_poses[self.swing_leg]:
+                front_mid = midwayLine(isostable[0], isostable[1])
+                offset = midwayLine([0,0], front_mid)
+            #for j in range(4): #self.cross_poses[self.swing_leg]:
                 # TODO: we should compute body shift first, so we get max movement
-                self.last_pose[j][0] -= offset[0]
-                self.last_pose[j][1] -= offset[1]
-            self.x += offset[0]
-            self.y += offset[1]
+            #    self.last_pose[j][0] -= offset[0]
+            #    self.last_pose[j][1] -= offset[1]
+            #self.x += offset[0]
+            #self.y += offset[1]
             # TODO r
 
         else: # DROP
-            print "Dropping", self.legs[self.swing_leg]
             self.last_pose[self.swing_leg][2] -= self.lift
         
         # advance
@@ -232,7 +219,6 @@ class MuybridgeGaitController:
     ## @param prev_swing The previous swing leg.
     ## @param dir_changed Has the direction changed since last cycle?
     def computeSwingLeg(self, poses, prev_swing, dir_changed):
-        print "  Computing swing leg..."
         # Which legs can be a swing leg?
         candidates = list()
         for i in range(4):
@@ -241,16 +227,15 @@ class MuybridgeGaitController:
                 continue
             # Test if support polygon is OK
             pts = [poses[j] for j in self.cross_poses[i]]
-            iso = reduceTriangle(pts[0], pts[1], pts[2], 0.01)
+            iso = reduceTriangle(pts[0], pts[1], pts[2], self.stability)
             if insideTriangle([0,0], iso[0], iso[1], iso[2]):
                 print "      ", self.legs[i], "is candidate"
-                candidates.append(i)
+                #candidates.append(i)
         # Of the candidates, which can go the farthest?
         max_dist = list()
         for c in candidates:
             vector = [self.last_x_vel, 0] # TODO: update this to do x/y/r velocity
             max_dist.append(self.getMaxDist(self.robot.ik[self.legs[c]], poses[c], vector))
-        print "    candidate distances:", max_dist
         if len(max_dist) == 0:
             return None
         if max(max_dist) < 0.001:
