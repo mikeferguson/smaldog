@@ -79,15 +79,12 @@ def centroidTriangle(v1, v2, v3):
 ## @param v3 Third vertex of triangle [x, y]
 ## @param scale Amount to scale the triangle
 def scaleTriangle(v1, v2, v3, scale):
-    print v1, v2, v3, scale
     # scale v2, v3
     v2s = scaleLine(v1, v2, scale)
     v3s = scaleLine(v1, v3, scale)
     # offset towards centroid   
     c = centroidTriangle(v1, v2, v3)
-    print "centroid", c
     offset = scaleVector(c, v1, 1-scale)
-    print "offset", offset
     v1n = [v1[0] - offset[0], v1[1] - offset[1]]
     v2n = [v2s[0] - offset[0], v2s[1] - offset[1]]
     v3n = [v3s[0] - offset[0], v3s[1] - offset[1]]

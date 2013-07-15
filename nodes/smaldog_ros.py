@@ -25,6 +25,7 @@ from smaldog.robot_defs import *
 import smaldog.ax12
 
 from smaldog.controllers.muybridge import *
+#from smaldog.visualization.stability import *
 
 import rospy
 from sensor_msgs.msg import JointState
@@ -60,6 +61,8 @@ class SMALdogROS:
             # get stance from controller TODO: this really should be a motion plan
             new_stance = controller.next(self.x, 0, 0) # TODO: add y/r
             t = new_stance[0]
+            #draw(new_stance[1], controller, self.robot)
+
             # do IK
             new_pose = self.robot.getIK(new_stance[1])
             new_pose["x"] = controller.x
@@ -112,8 +115,8 @@ class SMALdogROS:
 
     def cmdCb(self, msg):
         # TODO: add y/r
-        if msg.linear.x > 0.05:
-            self.x = 0.05
+        if msg.linear.x > 0.075:
+            self.x = 0.075
         else:
             self.x = msg.linear.x
 
