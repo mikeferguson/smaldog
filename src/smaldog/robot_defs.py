@@ -18,12 +18,18 @@
 
 ## @file robot_defs.py Robot-specific information.
 
+from math import isnan
 from leg_ik import *
 import ax12
+
 
 ## @brief Convert radians to servo position offset.
 def radToServoAX12(rads):
     return int((rads/5.235987755982989) * 1024)
+
+## @brief Convert servo position to radians
+def servoToRadAX12(servo):
+    return (servo/1024.0) * 5.235987755982989
 
 ## @brief Convert radians to servo ticks, apply neutrals, check limits.
 def convertToAX12(values, robot):
@@ -53,6 +59,7 @@ def makeSyncWritePacket(positions):
 
 ## @brief The definitions for robot geometry and layout
 class SMALdog:
+    legs = ["rf", "rr", "lf", "lr"]
     servo_res = 1024
     names =    ["rf_pitch_joint", "lf_pitch_joint",
                 "rf_flex_joint", "lf_flex_joint",
@@ -82,8 +89,33 @@ class SMALdog:
     def __init__(self):
         # initialize IK solvers for each leg
         self.ik = dict()
-        self.ik["lf"] = LegIK("lf", self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
         self.ik["rf"] = LegIK("rf", self.X_SHOULDER, -self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
-        self.ik["lr"] = LegIK("lr", -self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
         self.ik["rr"] = LegIK("rr", -self.X_SHOULDER, -self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+        self.ik["lf"] = LegIK("lf", self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+        self.ik["lr"] = LegIK("lr", -self.X_SHOULDER, self.Y_SHOULDER, self.L_SHOULDER, self.L_FEMUR, self.L_TIBIA)
+
+    def getIK(self, footposes):
+        angles = dict()
+        for i in range(4):
+            angles.update(self.ik[self.legs[i]].getIK(footposes[i][0], footposes[i][1], footposes[i][2]))
+        return angles
+
+    def checkLimits(self, angles):
+        for name, pos in angles.items():
+            i = self.names.index(name)
+            if self.signs[i] > 0:
+                mini = servoToRadAX12(self.mins[i] - self.neutrals[i])
+                maxi = servoToRadAX12(self.maxs[i] - self.neutrals[i])
+            else:
+                maxi = -servoToRadAX12(self.mins[i] - self.neutrals[i])
+                mini = -servoToRadAX12(self.maxs[i] - self.neutrals[i])
+            if isnan(pos):
+                return False
+            if pos > maxi:
+                print "Servo", name, "has limits of", mini, maxi, "but", pos, "requested."
+                return False
+            if pos < mini:
+                print "Servo", name, "has limits of", mini, maxi, "but", pos, "requested."
+                return False
+        return True
 
