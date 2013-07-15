@@ -86,6 +86,11 @@ class SMALdog:
     L_FEMUR = 0.065     # Meters distance from flex servo to knee servo (from CAD)
     L_TIBIA = 0.088     # Meters distance from knee servo to foot (from CAD)
 
+    DEFAULT_STANCE = [[X_SHOULDER, -0.06, -0.1],   # Right Front
+                      [-X_SHOULDER, -0.06, -0.1],  # Right Rear
+                      [X_SHOULDER, 0.06, -0.1],    # Left Front
+                      [-X_SHOULDER, 0.06, -0.1]]   # Left Rear
+
     def __init__(self):
         # initialize IK solvers for each leg
         self.ik = dict()

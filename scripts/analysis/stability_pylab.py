@@ -24,20 +24,16 @@ from smaldog.controllers.muybridge import *
 
 if __name__=="__main__":
     robot = SMALdog()
-    zero_stance = [[robot.X_SHOULDER, -0.05, -0.095],   # Right Front
-                   [-robot.X_SHOULDER, -0.05, -0.095],  # Right Rear
-                   [robot.X_SHOULDER, 0.05, -0.095],    # Left Front
-                   [-robot.X_SHOULDER, 0.05, -0.095]]   # Left Rear
-    controller = MuybridgeGaitController(robot, zero_stance)
+    controller = MuybridgeGaitController(robot, robot.DEFAULT_STANCE)
 
-    stance_X = [s[0] for s in zero_stance]
-    stance_Y = [s[1] for s in zero_stance]
+    stance_X = [s[0] for s in robot.DEFAULT_STANCE]
+    stance_Y = [s[1] for s in robot.DEFAULT_STANCE]
     stance_c = 'yo'
 
     figure()
     for swing_leg in range(4):
         legs = controller.cross_poses[swing_leg]
-        support = [zero_stance[z] for z in legs]
+        support = [robot.DEFAULT_STANCE[z] for z in legs]
 
         stability_X = [s[0] for s in support]
         stability_Y = [s[1] for s in support]

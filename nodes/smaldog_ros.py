@@ -41,22 +41,16 @@ class SMALdogROS:
         else:
             self.conn = None
 
-        self.zero_stance = [[self.robot.X_SHOULDER, -0.06, -0.1],   # Right Front
-                            [-self.robot.X_SHOULDER, -0.06, -0.1],  # Right Rear
-                            [self.robot.X_SHOULDER, 0.06, -0.1],    # Left Front
-                            [-self.robot.X_SHOULDER, 0.06, -0.1]]   # Left Rear
-
-        self.joint_state_pub = rospy.Publisher('joint_states', JointState)
-        self.odom_broadcaster = TransformBroadcaster()
-
         self.x = 0
         self.y = 0
 
+        self.joint_state_pub = rospy.Publisher('joint_states', JointState)
+        self.odom_broadcaster = TransformBroadcaster()
         rospy.Subscriber("cmd_vel", Twist, self.cmdCb)
     
     def run(self):
-        controller = MuybridgeGaitController(self.robot, self.zero_stance)
-        old_pose = self.robot.getIK(self.zero_stance)
+        controller = MuybridgeGaitController(self.robot, self.robot.DEFAULT_STANCE)
+        old_pose = self.robot.getIK(self.robot.DEFAULT_STANCE)
         old_pose["x"] = 0.0
         old_pose["y"] = 0.0
         old_pose["r"] = 0.0
