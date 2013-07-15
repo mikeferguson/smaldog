@@ -49,13 +49,18 @@ def scaleLine(p1, p2, scale):
         vector[i] = vector[i] * scale + p1[i]
     return vector
 
+def scaleVector(p1, p2, scale):
+    vector = [p2[0] - p1[0], p2[1] - p1[1]]
+    for i in range(len(vector)):
+        vector[i] = vector[i] * scale # + p1[i]
+    return vector
+
 ## @brief Find the length of a line
 ## @param p1 First point forming line [x, y]
 ## @param p2 Second point forming line [x, y]
 def lengthLine(p1, p2):
     x = p2[0] - p1[0]
     y = p2[1] - p1[1]
-    print "len", x, y
     return sqrt(x*x + y*y)
 
 ## @brief Find the centroid of the triangle
@@ -74,12 +79,15 @@ def centroidTriangle(v1, v2, v3):
 ## @param v3 Third vertex of triangle [x, y]
 ## @param scale Amount to scale the triangle
 def scaleTriangle(v1, v2, v3, scale):
+    print v1, v2, v3, scale
     # scale v2, v3
     v2s = scaleLine(v1, v2, scale)
     v3s = scaleLine(v1, v3, scale)
     # offset towards centroid   
     c = centroidTriangle(v1, v2, v3)
-    offset = scaleLine(v1, c, scale)
+    print "centroid", c
+    offset = scaleVector(c, v1, 1-scale)
+    print "offset", offset
     v1n = [v1[0] - offset[0], v1[1] - offset[1]]
     v2n = [v2s[0] - offset[0], v2s[1] - offset[1]]
     v3n = [v3s[0] - offset[0], v3s[1] - offset[1]]
@@ -95,5 +103,4 @@ def reduceTriangle(v1, v2, v3, r):
     m = midwayLine(v1, v2)
     l = lengthLine(m, c)
     scale = (l-r)/l
-    print scale
     return scaleTriangle(v1, v2, v3, scale)
