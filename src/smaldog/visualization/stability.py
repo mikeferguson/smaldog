@@ -21,50 +21,65 @@
 from pylab import *
 from smaldog.geometry import *
 
-def draw(stance, controller, robot):
-    if controller.swing_leg == None:
-      return
+class StabilityVisualization:
 
-    default_X = [s[0] for s in robot.DEFAULT_STANCE]
-    default_Y = [-s[1] for s in robot.DEFAULT_STANCE]
-    default_X.append(0)
-    default_Y.append(0)
-    default_c = 'yo'
+    def __init__(self, robot):
+        self.robot = robot
 
-    stance_X = [s[0]+controller.x for s in stance]
-    stance_Y = [-s[1]-controller.y for s in stance]
-    stance_c = 'bo'
+        self.default_X = [s[0] for s in robot.DEFAULT_STANCE]
+        self.default_Y = [-s[1] for s in robot.DEFAULT_STANCE]
+        self.default_X.append(0)
+        self.default_Y.append(0)
+        self.default_c = 'yo'
 
-    legs = controller.cross_poses[controller.swing_leg]
-    support = [stance[z] for z in legs]
+        self.legs_X = [list(), list(), list(), list()]
+        self.legs_Y = [list(), list(), list(), list()]
+        self.legs_c = ['bo', 'go', 'ro', 'ko']
 
-    stability_X = [s[0]+controller.x for s in support]
-    stability_Y = [-s[1]-controller.y for s in support]
-    stability_X.append(stability_X[0]); stability_Y.append(stability_Y[0])
-    stability_c = 'b'
+        self.center_X = [0, ]
+        self.center_Y = [0, ]
+        self.center_c = 'y-'
 
-    isostable = reduceTriangle(support[0], support[1], support[2], controller.stability)
-    iso_X = [p[0]+controller.x for p in isostable]
-    iso_Y = [-p[1]-controller.y for p in isostable]
-    iso_X.append(iso_X[0]); iso_Y.append(iso_Y[0])
-    iso_c = 'r'
+    def draw(self, stance, controller):
+        if controller.swing_leg == None:
+            return
+
+        for i in range(4):
+            self.legs_X[i].append(stance[i][0]+controller.x)
+            self.legs_Y[i].append(-stance[i][1]-controller.y)
+
+        legs = controller.cross_poses[controller.swing_leg]
+        support = [stance[z] for z in legs]
+
+        stability_X = [s[0]+controller.x for s in support]
+        stability_Y = [-s[1]-controller.y for s in support]
+        stability_X.append(stability_X[0]); stability_Y.append(stability_Y[0])
+        stability_c = 'b'
+
+        isostable = reduceTriangle(support[0], support[1], support[2], controller.stability)
+        iso_X = [p[0]+controller.x for p in isostable]
+        iso_Y = [-p[1]-controller.y for p in isostable]
+        iso_X.append(iso_X[0]); iso_Y.append(iso_Y[0])
+        iso_c = 'r'
   
-    center_X = [controller.x,]
-    center_Y = [-controller.y,]
-    center_c = 'ro'
+        self.center_X.append(controller.x)
+        self.center_Y.append(-controller.y)
 
-    swing_X = [stance[controller.swing_leg][0]+controller.x, ]
-    swing_Y = [-stance[controller.swing_leg][1]-controller.y, ]
-    if stance[controller.swing_leg][2] != robot.DEFAULT_STANCE[controller.swing_leg][2]:
-      swing_c = 'ro'
-    else:
-      swing_c = 'bo'
+        swing_X = [stance[controller.swing_leg][0]+controller.x, ]
+        swing_Y = [-stance[controller.swing_leg][1]-controller.y, ]
+        if stance[controller.swing_leg][2] != self.robot.DEFAULT_STANCE[controller.swing_leg][2]:
+          swing_c = 'ro'
+        else:
+          swing_c = 'bo'
 
-    plot(default_Y, default_X, default_c,
-       stability_Y, stability_X, stability_c,
-       iso_Y, iso_X, iso_c,
-       stance_Y, stance_X, stance_c,
-       center_Y, center_X, center_c,
-       swing_Y, swing_X, swing_c)
-    axis('equal')
-    show()
+        plot(self.legs_Y[0], self.legs_X[0], self.legs_c[0],
+             self.legs_Y[1], self.legs_X[1], self.legs_c[1],
+             self.legs_Y[2], self.legs_X[2], self.legs_c[2],
+             self.legs_Y[3], self.legs_X[3], self.legs_c[3],
+             #self.default_Y, self.default_X, self.default_c,
+             stability_Y, stability_X, stability_c,
+             iso_Y, iso_X, iso_c,
+             self.center_Y, self.center_X, self.center_c,
+             swing_Y, swing_X, swing_c)
+        axis('equal')
+        show()
