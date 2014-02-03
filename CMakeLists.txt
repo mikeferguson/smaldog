@@ -2,12 +2,26 @@ cmake_minimum_required(VERSION 2.8.3)
 project(smaldog)
 
 find_package(Boost REQUIRED system thread)
-find_package(catkin REQUIRED roscpp)
+find_package(catkin REQUIRED
+  COMPONENTS
+    message_generation
+    roscpp
+)
+
+add_message_files(
+  FILES
+    State.msg
+)
 
 catkin_python_setup()
+
+generate_messages()
+
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp
+  CATKIN_DEPENDS
+    message_runtime
+    roscpp
 )
 
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE__DIRS})
