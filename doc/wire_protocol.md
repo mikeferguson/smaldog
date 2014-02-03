@@ -32,8 +32,8 @@ read failed.
 The IMU data includes the current accelerometer and gyro data. Format: TBD.
 
 ####Current Measurements (12 Bytes)
-For each current sensor, a 16-bit floating point number representing current
-in Amperes is returned. The order is:
+For each current sensor, a 16-bit signed integer representing current in 100mA
+steps is returned. The order is:
  * Power inlet current sense
  * Computer power current sense
  * Left front leg
@@ -42,8 +42,8 @@ in Amperes is returned. The order is:
  * Left rear leg
 
 ####Present Voltage (2 Bytes)
-This is a 16-bit floating point number representing the battery voltage level
-in Volts.
+This is a 16-bit unsigned integer representing the battery voltage level in
+100mV steps.
 
 ####Foot Touch Sensors (4 Bytes)
 For each foot, we get an 8-bit value representing the force on the leg:
