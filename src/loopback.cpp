@@ -29,7 +29,8 @@ struct RobotData
   uint16_t imu_data[6];
   uint16_t current_measurements[6];
   uint16_t voltage;
-  uint8_t contact_sensors[4];  
+  uint8_t contact_sensors[4];
+  uint8_t run_stop_status;
 };
 
 int main(int argc, char **argv)

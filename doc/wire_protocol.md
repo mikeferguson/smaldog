@@ -52,5 +52,8 @@ For each foot, we get an 8-bit value representing the force on the leg:
  * Right front foot
  * Left rear foot
 
+####Run Stop Status (1 Byte)
+Returns >0 if runstop has been pressed.
+
 ## Notes:
  * Leg data is always in the same order as a standard crawl gait: LF, RR, RF, LR
