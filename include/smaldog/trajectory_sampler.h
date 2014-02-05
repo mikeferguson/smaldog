@@ -41,7 +41,7 @@ public:
    *  \param ns The namespace for this action.
    *  \param joints Name of joints that should be sampled from.
    */
-  TrajectorySampler(std::string ns, std::vector<std::string> joints);
+  TrajectorySampler(const std::string ns, const std::vector<std::string> joints);
   ~TrajectorySampler() {}
 
   /**

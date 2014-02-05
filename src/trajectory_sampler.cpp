@@ -21,7 +21,7 @@
 namespace smaldog
 {
 
-TrajectorySampler::TrajectorySampler(std::string ns, std::vector<std::string> joints)
+TrajectorySampler::TrajectorySampler(const std::string ns, const std::vector<std::string> joints)
  : namespace_(ns), joints_(joints)
 {
   /* Setup action feedback */ 
