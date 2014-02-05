@@ -23,6 +23,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <ros/ros.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
@@ -33,6 +34,18 @@ namespace smaldog
 
 class TrajectorySampler
 {
+  struct TrajectoryPoint
+  {
+    ros::Time time;
+    std::vector<double> positions;
+  };
+
+  struct Trajectory
+  {
+    std::vector<TrajectoryPoint> points;
+    int segment;
+  };
+
   typedef actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> server_t;
 
 public:
@@ -53,7 +66,9 @@ public:
   /**
    *  \brief Sample at this time step.
    *  \param time The time to sample at.
-   *  \param positions Vector of joint positions returned in same order as joint names passed in.
+   *  \param positions Vector of joint positions. Should be used to pass in
+   *         actual joint positions, is then used to return the sampling,
+   *         always in same order as joint names passed in.
    *  \returns True if we were able to sample for this time.
    */
   bool sample(ros::Time time, std::vector<double>& positions);
@@ -69,6 +84,11 @@ private:
    */
   void messageCb(const trajectory_msgs::JointTrajectoryConstPtr& msg);
 
+  /**
+   *  \brief Create a new trajectory.
+   */
+  Trajectory createTrajectory(const trajectory_msgs::JointTrajectory& msg);
+
   std::string namespace_;
   std::vector<std::string> joints_;
 
@@ -76,6 +96,9 @@ private:
   ros::Subscriber subscriber_;
 
   control_msgs::FollowJointTrajectoryFeedback feedback_;
+
+  Trajectory trajectory_;
+  boost::mutex trajectory_mutex_;
 };
 
 }  // namespace smaldog

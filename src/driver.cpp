@@ -125,11 +125,11 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
   try
   {
     /* Get desired positions */
-    std::vector<double> positions;
+    std::vector<double> positions = joint_msg_.position;
     bool result = body_sampler_->sample(ros::Time::now(), positions);
 
     /* Setup message */
-    boost::array<char, 4 + 1 + 24> send_buf;
+    boost::array<uint8_t, 4 + 1 + 24> send_buf;
     send_buf[0] = 'S';
     send_buf[1] = 'M';
     send_buf[2] = 'A';
@@ -139,7 +139,7 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
     /* Convert positions to servo positions */
     for (size_t s = 0; s < positions.size(); ++s)
     {
-      int16_t val = -1;
+      uint16_t val = -1;
       if (result)
         val = (positions[s] / joint_scales_[s]) + joint_offsets_[s];
       send_buf[5 + (2*s)] = val & 0xff;
@@ -176,14 +176,14 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
     if ((bytes_transferred > 5) &&
         (recv_buffer_[0] == 'S') && (recv_buffer_[1] == 'M') &&
         (recv_buffer_[2] == 'A') && (recv_buffer_[3] == 'L') &&
-        ((int)recv_buffer_[4] == -1))
+        (recv_buffer_[4] == 0xff))
     {
       /* Convert servo positions to joint_state messages */
       if (bytes_transferred >= 33)
       {
         for (size_t s = 0; s < joint_msg_.position.size(); ++s)
         {
-          int16_t val = recv_buffer_[5+(2*s)] + (recv_buffer_[6+(2*s)]<<8);
+          int16_t val = (int16_t)recv_buffer_[5+(2*s)] + ((int16_t)recv_buffer_[6+(2*s)] << 8);
           joint_msg_.position[s] = (val - joint_offsets_[s]) * joint_scales_[s];
         }
       }
