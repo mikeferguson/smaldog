@@ -113,6 +113,13 @@ udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
 
 void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
 {
+  /* ROS catches the ctrl-c, but we need to stop the io_service to exit */
+  if(!ros::ok())
+  {
+    socket_.get_io_service().stop();
+    return;
+  }
+
   /* Send updated state */
   udp::endpoint receiver_endpoint = udp::endpoint(boost::asio::ip::address::from_string(ip_address_), 6707);
   try
