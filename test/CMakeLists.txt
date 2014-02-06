@@ -1,0 +1,1 @@
+catkin_add_nosetests(python)

@@ -57,11 +57,11 @@ set_target_properties(smaldog_loopback
   PREFIX ""
 )
 
-catkin_add_nosetests(tests)
-
 install(
   TARGETS
     smaldog_loopback
   DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+add_subdirectory(test)
