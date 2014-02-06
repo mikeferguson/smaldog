@@ -21,7 +21,7 @@
   <joint name="lf_pitch_joint" type="revolute">
     <axis xyz="1 0 0" />
     <origin xyz="0.086 0.019 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-0.3221" upper="1.0" velocity="6.17846"/>
     <parent link="body_link"/>
     <child link="lf_shoulder_link"/>
   </joint>
@@ -37,7 +37,7 @@
   <joint name="lf_flex_joint" type="revolute">
     <axis xyz="0 1 0" />
     <origin xyz="0 0.050 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-1.2629" upper="2.2549" velocity="6.17846"/>
     <parent link="lf_shoulder_link"/>
     <child link="lf_femur_link"/>
   </joint>
@@ -51,9 +51,9 @@
     </visual>
   </link>
   <joint name="lf_knee_joint" type="revolute">
-    <axis xyz="0 -1 0" />
+    <axis xyz="0 1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-2.807" upper="0.588" velocity="6.17846"/>
     <parent link="lf_femur_link"/>
     <child link="lf_tibia_link"/>
   </joint>
@@ -70,7 +70,7 @@
   <joint name="lr_pitch_joint" type="revolute">
     <axis xyz="1 0 0" />
     <origin xyz="-0.086 0.019 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-0.3221" upper="1.0" velocity="6.17846"/>
     <parent link="body_link"/>
     <child link="lr_shoulder_link"/>
   </joint>
@@ -84,9 +84,9 @@
     </visual>
   </link>
   <joint name="lr_flex_joint" type="revolute">
-    <axis xyz="0 -1 0" />
+    <axis xyz="0 1 0" />
     <origin xyz="0 0.050 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-2.2549" upper="1.2629" velocity="6.17846"/>
     <parent link="lr_shoulder_link"/>
     <child link="lr_femur_link"/>
   </joint>
@@ -102,7 +102,7 @@
   <joint name="lr_knee_joint" type="revolute">
     <axis xyz="0 1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-0.588" upper="2.807" velocity="6.17846"/>
     <parent link="lr_femur_link"/>
     <child link="lr_tibia_link"/>
   </joint>
@@ -117,9 +117,10 @@
   </link>
 
   <joint name="rf_pitch_joint" type="revolute">
-    <axis xyz="-1 0 0" />
+    <axis xyz="1 0 0" />
     <origin xyz="0.086 -0.019 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <!-- Actual lower limit is -1.8408, but leg will collide with PCB -->
+    <limit effort="1.1767" lower="-1.0" upper="0.3221" velocity="6.17846"/>
     <parent link="body_link"/>
     <child link="rf_shoulder_link"/>
   </joint>
@@ -135,7 +136,7 @@
   <joint name="rf_flex_joint" type="revolute">
     <axis xyz="0 1 0" />
     <origin xyz="0 -0.050 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-1.2629" upper="2.2549" velocity="6.17846"/>
     <parent link="rf_shoulder_link"/>
     <child link="rf_femur_link"/>
   </joint>
@@ -149,9 +150,9 @@
     </visual>
   </link>
   <joint name="rf_knee_joint" type="revolute">
-    <axis xyz="0 -1 0" />
+    <axis xyz="0 1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-2.807" upper="0.588" velocity="6.17846"/>
     <parent link="rf_femur_link"/>
     <child link="rf_tibia_link"/>
   </joint>
@@ -166,9 +167,9 @@
   </link>
 
   <joint name="rr_pitch_joint" type="revolute">
-    <axis xyz="-1 0 0" />
+    <axis xyz="1 0 0" />
     <origin xyz="-0.086 -0.019 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-1.0" upper="0.3221" velocity="6.17846"/>
     <parent link="body_link"/>
     <child link="rr_shoulder_link"/>
   </joint>
@@ -182,9 +183,9 @@
     </visual>
   </link>
   <joint name="rr_flex_joint" type="revolute">
-    <axis xyz="0 -1 0" />
+    <axis xyz="0 1 0" />
     <origin xyz="0 -0.050 0" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-2.2549" upper="1.2629" velocity="6.17846"/>
     <parent link="rr_shoulder_link"/>
     <child link="rr_femur_link"/>
   </joint>
@@ -200,7 +201,7 @@
   <joint name="rr_knee_joint" type="revolute">
     <axis xyz="0 1 0" />
     <origin xyz="0 0 -0.064" rpy="0 0 0"/>
-    <limit effort="30" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <limit effort="1.1767" lower="-0.588" upper="2.807" velocity="6.17846"/>
     <parent link="rr_femur_link"/>
     <child link="rr_tibia_link"/>
   </joint>

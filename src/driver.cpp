@@ -48,7 +48,7 @@ udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
    */
   joint_msg_.name[0] = "rf_pitch_joint";  // id 1
   joint_offsets_[0] = 512;
-  joint_scales_[0] = -0.00511326929;
+  joint_scales_[0] = 0.00511326929;
 
   joint_msg_.name[1] = "lf_pitch_joint";
   joint_offsets_[1] = 512;
@@ -64,15 +64,15 @@ udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
 
   joint_msg_.name[4] = "rf_knee_joint";
   joint_offsets_[4] = 308;
-  joint_scales_[4] = 0.00511326929;
+  joint_scales_[4] = -0.00511326929;
 
   joint_msg_.name[5] = "lf_knee_joint";
   joint_offsets_[5] = 716;
-  joint_scales_[5] = -0.00511326929;
+  joint_scales_[5] = 0.00511326929;
 
   joint_msg_.name[6] = "rr_pitch_joint";
   joint_offsets_[6] = 512;
-  joint_scales_[6] = 0.00511326929;
+  joint_scales_[6] = -0.00511326929;
 
   joint_msg_.name[7] = "lr_pitch_joint";
   joint_offsets_[7] = 512;
@@ -80,11 +80,11 @@ udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
 
   joint_msg_.name[8] = "rr_flex_joint";
   joint_offsets_[8] = 582;
-  joint_scales_[8] = 0.00511326929;
+  joint_scales_[8] = -0.00511326929;
 
   joint_msg_.name[9] = "lr_flex_joint";
   joint_offsets_[9] = 442;
-  joint_scales_[9] = -0.00511326929;
+  joint_scales_[9] = 0.00511326929;
 
   joint_msg_.name[10] = "rr_knee_joint";
   joint_offsets_[10] = 716;

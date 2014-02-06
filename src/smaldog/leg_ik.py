@@ -62,35 +62,48 @@ class LegIK:
                          self.SHOULDER_Y*sinR - self.SHOULDER_X*sinP ] # X, Y, Z
         
         # The remainder of this is in quadrant 1, need to convert to that
-        if self.SHOULDER_X > 0:
-            X = X - shoulder_pos[0]
-        else:
-            X = -(X - shoulder_pos[0])
-        if self.SHOULDER_Y > 0:
-            Y = Y - shoulder_pos[1]
-        else:
-            Y = -(Y - shoulder_pos[1])
+        #if self.SHOULDER_X > 0:
+        X = X - shoulder_pos[0]
+        #else:
+            #X = -(X - shoulder_pos[0])
+        #if self.SHOULDER_Y > 0:
+        Y = Y - shoulder_pos[1]
+        #else:
+            #Y = -(Y - shoulder_pos[1])
 
         try:
+            if Y < 0:
+                S = -self.L_SHOULDER
+            else:
+                S = self.L_SHOULDER
             # first, make this a 2DOF problem... by solving shoulder
             im1 = sqrt(sq(Y) + sq(-Z))
-            trueZ = sqrt(sq(im1) - sq(self.L_SHOULDER))
+            trueZ = sqrt(sq(im1) - sq(S))
             q1 = atan2(Y,-Z)
-            q2 = acos(self.L_SHOULDER/im1)
+            q2 = acos(S/im1)
             angles[self.name + "_pitch_joint"] = q1 + q2 - pi/2
 
-            # get femure angle from vertical
+            # get femur angle from vertical
             im2 = sqrt(sq(X) + sq(trueZ))
-            q3 = atan2(-X, trueZ)
+            if self.SHOULDER_X > 0:
+                q3 = atan2(-X, trueZ)
+            else:
+                q3 = atan2(X, trueZ)
             d1 = sq(self.L_FEMUR) - sq(self.L_TIBIA) + sq(im2)
             d2 = 2 * self.L_FEMUR * im2
             q4 = acos(d1/d2)
-            angles[self.name + "_flex_joint"] = q3 + q4
+            if self.SHOULDER_X > 0:
+                angles[self.name + "_flex_joint"] = q3 + q4
+            else:
+                angles[self.name + "_flex_joint"] = -(q3 + q4)
 
             # and tibia angle from femur
             d3 = sq(self.L_FEMUR) - sq(im2) + sq(self.L_TIBIA)
             d4 = 2 * self.L_TIBIA * self.L_FEMUR
-            angles[self.name + "_knee_joint"] = pi - acos(d3/d4)
+            if self.SHOULDER_X > 0:
+                angles[self.name + "_knee_joint"] = acos(d3/d4) - pi
+            else:
+                angles[self.name + "_knee_joint"] = pi - acos(d3/d4)
         except Exception as e:
             pass
 
