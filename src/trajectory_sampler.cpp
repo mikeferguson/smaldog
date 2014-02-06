@@ -86,7 +86,8 @@ bool TrajectorySampler::sample(ros::Time time, std::vector<double>& positions)
   }
   else
   {
-    double t = (trajectory_.points[trajectory_.segment+1].time - trajectory_.points[trajectory_.segment].time).toSec();
+    double dt = (trajectory_.points[trajectory_.segment+1].time - trajectory_.points[trajectory_.segment].time).toSec();
+    double t = (time - trajectory_.points[trajectory_.segment].time).toSec() / dt;
     for (size_t i = 0; i < positions.size(); ++i)
     {
       feedback_.desired.positions[i] = trajectory_.points[trajectory_.segment].positions[i] +
