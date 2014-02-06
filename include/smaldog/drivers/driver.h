@@ -16,8 +16,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_DRIVER_H_
-#define SMALDOG_DRIVER_H_
+#ifndef SMALDOG_DRIVERS_DRIVER_H_
+#define SMALDOG_DRIVERS_DRIVER_H_
 
 #include <iostream>
 #include <string>
@@ -29,7 +29,7 @@
 #include <sensor_msgs/JointState.h>
 
 #include "smaldog/State.h"
-#include "smaldog/trajectory_sampler.h"
+#include "smaldog/drivers/trajectory_sampler.h"
 
 using boost::asio::ip::udp;
 
@@ -86,4 +86,4 @@ private:
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_DRIVER_H_
+#endif  // SMALDOG_DRIVERS_DRIVER_H_

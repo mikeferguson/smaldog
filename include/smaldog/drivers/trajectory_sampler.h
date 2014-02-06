@@ -16,8 +16,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_TRAJECTORY_SAMPLER_H_
-#define SMALDOG_TRAJECTORY_SAMPLER_H_
+#ifndef SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_
+#define SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_
 
 #include <vector>
 #include <string>
@@ -103,4 +103,4 @@ private:
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_TRAJECTORY_SAMPLER_H_
+#endif  // SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_

@@ -16,7 +16,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#include "smaldog/trajectory_sampler.h"
+#include "smaldog/drivers/trajectory_sampler.h"
 
 namespace smaldog
 {
