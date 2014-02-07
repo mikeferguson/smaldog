@@ -59,7 +59,7 @@ set_target_properties(smaldog_loopback
 
 install(
   TARGETS
-    smaldog_loopback
+    smaldog_driver
   DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
