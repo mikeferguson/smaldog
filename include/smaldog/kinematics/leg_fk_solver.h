@@ -31,9 +31,9 @@ public:
   /**
    *  \brief Constructor for FK solver of a single leg of the robot.
    *  \param name Name of the leg.
-   *  \param shoulder Length of the shoulder link.
-   *  \param femur Length of the femur link.
-   *  \param tibia Length of the tibia link.
+   *  \param shoulder Length of the shoulder link (in meters).
+   *  \param femur Length of the femur link (in meters).
+   *  \param tibia Length of the tibia link (in meters).
    */
   LegFKSolver(std::string name, double shoulder, double femur, double tibia)
    : name_(name), l_shoulder_(shoulder), l_femur_(femur), l_tibia_(tibia)
@@ -50,15 +50,15 @@ public:
 
   /**
    *  \brief Compute the leg pose based on joint angles.
-   *  \param pitch The angle for the shoulder pitch joint.
-   *  \param flex The angle for the shoulder flex joint.
-   *  \param knee The angle for the knee joint.
-   *  \param x The computed x-coordinate of the leg pose.
-   *  \param y The computed y-coordinate of the leg pose.
-   *  \param z The computed z-coordinate of the leg pose.
+   *  \param pitch The angle for the shoulder pitch joint (in radians).
+   *  \param flex The angle for the shoulder flex joint (in radians).
+   *  \param knee The angle for the knee joint (in radians).
+   *  \param x The computed x-coordinate of the leg pose (in meters).
+   *  \param y The computed y-coordinate of the leg pose (in meters).
+   *  \param z The computed z-coordinate of the leg pose (in meters).
    */
   bool solveFK(const double pitch, const double flex, const double knee,
-               double& x, double& y, double&z)
+               double& x, double& y, double&z) const
   {
     /* Do the 2D math first */
     x = -sin(flex)*l_femur_ - sin(flex + knee)*l_tibia_;
@@ -75,7 +75,7 @@ private:
   /** \brief Name of the leg, for instance, "rf" */
   std::string name_;
 
-  /** \brief Length of leg components */
+  /** \brief Length of leg components (in meters) */
   double l_shoulder_, l_femur_, l_tibia_;
 };
 

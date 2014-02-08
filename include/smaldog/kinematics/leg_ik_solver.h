@@ -31,9 +31,9 @@ public:
   /**
    *  \brief Constructor for IK solver of a single leg of the robot.
    *  \param name Name of the leg.
-   *  \param shoulder Length of the shoulder link.
-   *  \param femur Length of the femur link.
-   *  \param tibia Length of the tibia link.
+   *  \param shoulder Length of the shoulder link (in meters).
+   *  \param femur Length of the femur link (in meters).
+   *  \param tibia Length of the tibia link (in meters).
    */
   LegIKSolver(std::string name, double shoulder, double femur, double tibia)
    : name_(name), l_shoulder_(shoulder), l_femur_(femur), l_tibia_(tibia)
@@ -48,15 +48,15 @@ public:
 
   /**
    *  \brief Compute the joint angles needed to hit a desired leg pose.
-   *  \param x The x-coordinate of the desired leg pose.
-   *  \param y The y-coordinate of the desired leg pose.
-   *  \param z The z-coordinate of the desired leg pose.
-   *  \param pitch The computed angle for the shoulder pitch joint.
-   *  \param flex The computed angle for the shoulder flex joint.
-   *  \param knee The computed angle for the knee joint.
+   *  \param x The x-coordinate of the desired leg pose (in meters).
+   *  \param y The y-coordinate of the desired leg pose (in meters).
+   *  \param z The z-coordinate of the desired leg pose (in meters).
+   *  \param pitch The computed angle for the shoulder pitch joint (in radians).
+   *  \param flex The computed angle for the shoulder flex joint (in radians).
+   *  \param knee The computed angle for the knee joint (in radians).
    */
   bool solveIK(const double x, const double y, const double z,
-               double& pitch, double& flex, double& knee)
+               double& pitch, double& flex, double& knee) const
   {
     /* Solve shoulder pitch first, so that flex/knee form a 2d problem */
     double im1 = sqrt(y*y + z*z);
@@ -98,7 +98,7 @@ public:
   }
 
 private:
-  bool inRangeACos(const double x)
+  bool inRangeACos(const double x) const
   {
     return (x <= 1.0 && x >= -1.0);
   }
@@ -106,7 +106,7 @@ private:
   /** \brief Name of the leg, for instance, "rf" */
   std::string name_;
 
-  /** \brief Length of leg components */
+  /** \brief Length of leg components (in meters) */
   double l_shoulder_, l_femur_, l_tibia_;
 };
 
