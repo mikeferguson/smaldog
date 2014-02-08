@@ -23,7 +23,7 @@ namespace smaldog
 
 udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
  : socket_(io_service),
-   milliseconds_(10),
+   milliseconds_(20),
    timer_(io_service, boost::posix_time::milliseconds(milliseconds_))
 {
   /* TODO: Setup IMU publisher */
@@ -129,12 +129,16 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
     bool result = body_sampler_->sample(ros::Time::now(), positions);
 
     /* Setup message */
-    boost::array<uint8_t, 4 + 1 + 24> send_buf;
+    boost::array<uint8_t, 4 + 4 + 26> send_buf;
     send_buf[0] = 'S';
     send_buf[1] = 'M';
     send_buf[2] = 'A';
     send_buf[3] = 'L';
-    send_buf[4] = 0x01;
+    send_buf[4] = 0xff;
+    send_buf[5] = 0xff;
+    send_buf[6] = 253;  // onboard device
+    send_buf[7] = 26;
+    send_buf[8] = 133;  // FULL_SYNC
 
     /* Convert positions to servo positions */
     for (size_t s = 0; s < positions.size(); ++s)
@@ -142,8 +146,8 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
       uint16_t val = -1;
       if (result)
         val = (positions[s] / joint_scales_[s]) + joint_offsets_[s];
-      send_buf[5 + (2*s)] = val & 0xff;
-      send_buf[6 + (2*s)] = (val >> 8) & 0xff;
+      send_buf[9 + (2*s)] = val & 0xff;
+      send_buf[10 + (2*s)] = (val >> 8) & 0xff;
     }
 
     /* Send the buffer */
@@ -173,54 +177,46 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
   if (!error || error == boost::asio::error::message_size)
   {
     /* Check header */
-    if ((bytes_transferred > 5) &&
+    if ((bytes_transferred == 84) &&
         (recv_buffer_[0] == 'S') && (recv_buffer_[1] == 'M') &&
         (recv_buffer_[2] == 'A') && (recv_buffer_[3] == 'L') &&
-        (recv_buffer_[4] == 0xff))
+        /* We only use full_sync in driver, so this is MODEL_L/H */
+        (recv_buffer_[4] ==  45) || (recv_buffer_[5] == 1))
     {
-      /* Convert servo positions to joint_state messages */
-      if (bytes_transferred >= 33)
-      {
-        for (size_t s = 0; s < joint_msg_.position.size(); ++s)
-        {
-          int16_t val = (int16_t)recv_buffer_[5+(2*s)] + ((int16_t)recv_buffer_[6+(2*s)] << 8);
-          joint_msg_.position[s] = (val - joint_offsets_[s]) * joint_scales_[s];
-        }
-      }
-
-      /* Convert IMU data */
-      if (bytes_transferred >= 45)
-      {
-        // TODO
-      }
+      // TODO: extract system time?
 
       /* Convert current measurements */
-      if (bytes_transferred >= 57)
-      {
-        state_msg_.current_total = (recv_buffer_[45] + (recv_buffer_[46]<<8)) * 0.1;
-        state_msg_.current_computer = (recv_buffer_[47] + (recv_buffer_[48]<<8)) * 0.1;
-        state_msg_.current_left_front_leg = (recv_buffer_[49] + (recv_buffer_[50]<<8)) * 0.1;
-        state_msg_.current_right_front_leg = (recv_buffer_[51] + (recv_buffer_[52]<<8)) * 0.1;
-        state_msg_.current_left_rear_leg = (recv_buffer_[53] + (recv_buffer_[54]<<8)) * 0.1;
-        state_msg_.current_right_rear_leg = (recv_buffer_[55] + (recv_buffer_[56]<<8)) * 0.1;
-      }
+      state_msg_.current_total = (recv_buffer_[4+16] + (recv_buffer_[4+17]<<8)) * 0.1;
+      state_msg_.current_computer = (recv_buffer_[4+18] + (recv_buffer_[4+19]<<8)) * 0.1;
+      state_msg_.current_left_front_leg = (recv_buffer_[4+20] + (recv_buffer_[4+21]<<8)) * 0.1;
+      state_msg_.current_right_front_leg = (recv_buffer_[4+22] + (recv_buffer_[4+23]<<8)) * 0.1;
+      state_msg_.current_left_rear_leg = (recv_buffer_[4+24] + (recv_buffer_[4+25]<<8)) * 0.1;
+      state_msg_.current_right_rear_leg = (recv_buffer_[4+26] + (recv_buffer_[4+27]<<8)) * 0.1;
 
       /* Convert voltage measurements */
-      if (bytes_transferred >= 59)
-        state_msg_.battery_voltage = (recv_buffer_[57] + (recv_buffer_[58]<<8)) * 0.1;
+      state_msg_.battery_voltage = recv_buffer_[4+28] * 0.1;
+
+      /* Convert IMU data */
+      // TODO
 
       /* Convert foot sensors */
-      if (bytes_transferred >= 63)
+      state_msg_.status_left_front_foot = recv_buffer_[4+44];
+      state_msg_.status_right_front_foot = recv_buffer_[4+45];
+      state_msg_.status_left_rear_foot = recv_buffer_[4+46];
+      state_msg_.status_right_rear_foot = recv_buffer_[4+47];
+
+      /* Convert servo positions to joint_state messages */
+      for (size_t s = 0; s < joint_msg_.position.size(); ++s)
       {
-        state_msg_.status_left_front_foot = recv_buffer_[59];
-        state_msg_.status_right_front_foot = recv_buffer_[60];
-        state_msg_.status_left_rear_foot = recv_buffer_[61];
-        state_msg_.status_right_rear_foot = recv_buffer_[62];
+        int16_t val = (int16_t)recv_buffer_[4+48+(2*s)] + ((int16_t)recv_buffer_[5+48+(2*s)] << 8);
+        if (val >= 0)
+          joint_msg_.position[s] = (val - joint_offsets_[s]) * joint_scales_[s];
+        else
+          ROS_DEBUG_STREAM("Read error on servo " << s);
       }
-      
+
       /* Convert run stop */
-      if (bytes_transferred >= 64)
-        state_msg_.run_stopped = recv_buffer_[63];
+      state_msg_.run_stopped = recv_buffer_[4+76];
     }
     else
     {

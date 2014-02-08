@@ -25,17 +25,34 @@ using boost::asio::ip::udp;
 
 struct RobotData
 {
-  int16_t servo_positions[14];
+  uint16_t model_number;
+  uint8_t  version;
+  uint8_t  id;
+  uint8_t  baud_rate;
+  uint8_t  return_delay;
+  uint16_t REG_6;
+  uint32_t last_packet;
+  uint32_t system_time;
+
+  int16_t current_measurements[6];
+  uint8_t voltage;
+  uint8_t led;
+  int16_t REG_30;
+
   uint16_t imu_data[6];
-  uint16_t current_measurements[6];
-  uint16_t voltage;
   uint8_t contact_sensors[4];
+
+  int16_t servo_positions[14];
   uint8_t run_stop_status;
+  uint8_t  REG_77;
+  uint16_t REG_78;
 };
 
 int main(int argc, char **argv)
 {
   RobotData data;
+  data.model_number = 302;
+  data.id = 253;
   
   /* Initialize servos */
   for (size_t i = 0; i < 14; ++i)
@@ -81,30 +98,30 @@ int main(int argc, char **argv)
       /* Confirm it is good */
       if ((recv_buf[0] != 'S') || (recv_buf[1] != 'M') ||
           (recv_buf[2] != 'A') || (recv_buf[3] != 'L') ||
-          (recv_buf[4] != 0x01))
+          (recv_buf[4] != 0xff) || (recv_buf[5] != 0xff) ||
+          (recv_buf[6] != 253) || (recv_buf[8] != 133)) // FULL_SYNC
       {
         std::cerr << "Invalid packet." << std::endl;
         continue;
       }
       
       std::cout << "Packet recieved." << std::endl;
-      
+
       /* Copy servo positions */
       for (size_t i = 0; i < 14; ++i)
       {
-        int16_t p = (int16_t)recv_buf[5+(2*i)] + ((int16_t)recv_buf[6+(2*i)] << 8);
+        int16_t p = (int16_t)recv_buf[9+(2*i)] + ((int16_t)recv_buf[10+(2*i)] << 8);
         if (p != -1)
           data.servo_positions[i] = p;
       }
 
       /* Send return message */
-      boost::array<uint8_t, sizeof(RobotData) + 5> send_buf;
+      boost::array<uint8_t, sizeof(RobotData) + 4> send_buf;
       send_buf[0] = 'S';
       send_buf[1] = 'M';
       send_buf[2] = 'A';
       send_buf[3] = 'L';
-      send_buf[4] = 0xff;
-      std::memcpy(&send_buf[5], &data, sizeof(RobotData));
+      std::memcpy(&send_buf[4], &data, sizeof(RobotData));
 
       socket.send_to(boost::asio::buffer(send_buf), remote_endpoint);
     }

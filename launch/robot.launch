@@ -1,0 +1,11 @@
+<launch>
+
+  <param name="robot_description" command="cat $(find smaldog)/urdf/smaldog.urdf" />
+
+  <node name="smaldog" pkg="smaldog" type="driver" output="screen">
+    <param name="ip_address" value="192.168.0.42"/>
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+</launch>

@@ -2,13 +2,20 @@
 This document describes the protocol used for the ethernet connection between
 the computer and the Dynamixel/IMU/power board.
 
-###Magic Number (4 Bytes)
-Every packet starts with a magic header containing four bytes: 'SMAL'.
+For the most part, we are following the Dynamixel protocol for ease. This
+includes the ability to pass packets through to the bus, ability to query a
+special board device (253), implementation of sync_read, and a special full sync
+instruction which takes in new positions for the 12 joints, and then returns
+the full system state.
 
-###Command Packet
-####Packet Type (1 Byte)
-The first byte following the magic number should be the packet type. At this
-time, only a value of 0x01 is supported for a command packet.
+###Ethernet Comms
+Every packet starts with a magic header containing four bytes: 'SMAL' followed
+by any number of concatenated Dynamixel packets.
+
+##FULL_SYNC
+The full_sync command is 0x85. The packet includes the 12 joint commands, and
+causes a sync_read to be done onboard the controller. The controller then returns
+the full system table.
 
 ####Dynamixel Data (28 Bytes)
 There are 14 servos connected to the control board. Servos 1-12 are the leg
@@ -20,7 +27,7 @@ servos with SYNC_WRITE command.
 ###Return Packet
 ####Packet Type (1 Byte)
 As with the command packet, a return packet has a type immediately following
-the magic number. For a return packet, this is 0xff.
+the magic number. For a return packet, this is 0xf1.
 
 ####Dynamixel Data (28 Bytes)
 After a command packet is recieved, the control board will forward the values
@@ -41,8 +48,8 @@ steps is returned. The order is:
  * Right front leg
  * Left rear leg
 
-####Present Voltage (2 Bytes)
-This is a 16-bit unsigned integer representing the battery voltage level in
+####Present Voltage
+This is an 8-bit unsigned integer representing the battery voltage level in
 100mV steps.
 
 ####Foot Touch Sensors (4 Bytes)
@@ -54,6 +61,11 @@ For each foot, we get an 8-bit value representing the force on the leg:
 
 ####Run Stop Status (1 Byte)
 Returns >0 if runstop has been pressed.
+
+###Other packets
+The firmware will also accept Dynamixel bus commands, pass them through to the
+bus, and forward the return packet to the PC. this is not used in the drivers,
+but can be used by other scripts.
 
 ## Notes:
  * Leg data is always in the same order as a standard crawl gait: LF, RR, RF, LR
