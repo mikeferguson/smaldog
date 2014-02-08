@@ -181,6 +181,11 @@ TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
   ros::Time time = ros::Time::now();
   Trajectory t;
 
+  /* Make sure time is filled in */
+  ros::Time start = msg.header.stamp;
+  if (start == ros::Time(0))
+    start = time;
+
   if (msg.points.size() < 2)
   {
     /* If we only have one new point, interpolate between present position and the new point */
@@ -188,7 +193,7 @@ TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
     t.points[0].positions = feedback_.actual.positions;
     t.points[1].positions = msg.points[0].positions;
     t.points[0].time = time;
-    t.points[1].time = msg.header.stamp + msg.points[0].time_from_start;
+    t.points[1].time = start + msg.points[0].time_from_start;
   }
   else
   {
@@ -196,7 +201,7 @@ TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
     for (size_t i = 0; i < trajectory_.points.size(); ++i)
     {
       if ((trajectory_.points[i].time > time) &&
-          (trajectory_.points[i].time < msg.header.stamp))
+          (trajectory_.points[i].time < start))
       {
         t.points.push_back(trajectory_.points[i]);
       }
@@ -207,7 +212,7 @@ TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
     {
       TrajectoryPoint p;
       p.positions = msg.points[i].positions;
-      p.time = msg.header.stamp + msg.points[i].time_from_start;
+      p.time = start + msg.points[i].time_from_start;
       t.points.push_back(p);
     }
   }
