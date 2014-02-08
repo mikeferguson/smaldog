@@ -21,7 +21,7 @@
 
 #include <vector>
 #include <string>
-#include <tf/transform_datatypes.h>
+#include <kdl/frames.hpp>
 
 namespace smaldog
 {
@@ -33,20 +33,42 @@ namespace smaldog
 class RobotState
 {
 public:
+  RobotState() : odom_transform(KDL::Rotation::Identity(), KDL::Vector::Zero()),
+                 body_transform(KDL::Rotation::Identity(), KDL::Vector::Zero())
+  {
+    /* This is the servo order */
+    joint_names.push_back("rf_pitch_joint");
+    joint_names.push_back("lf_pitch_joint");
+    joint_names.push_back("rf_flex_joint");
+    joint_names.push_back("lf_flex_joint");
+    joint_names.push_back("rf_knee_joint");
+    joint_names.push_back("lf_knee_joint");
+    joint_names.push_back("rr_pitch_joint");
+    joint_names.push_back("lr_pitch_joint");
+    joint_names.push_back("rr_flex_joint");
+    joint_names.push_back("lr_flex_joint");
+    joint_names.push_back("rr_knee_joint");
+    joint_names.push_back("lr_knee_joint");
+
+    joint_positions.resize(joint_names.size());
+    leg_contact_likelihood.resize(4);
+  }
+
   /** \brief Robot joint names */
   std::vector<std::string> joint_names;
 
   /** \brief Robot joint angles, order matches joint names above */
   std::vector<double> joint_positions;
 
-  /** \brief Names of legs */
-  std::vector<std::string> leg_names;
-
   /** \brief Which legs are in contact with the ground? */
   std::vector<double> leg_contact_likelihood;
 
-  /** \brief Body odometry transform (body_link -> odom) */
-  tf::Transform odom_transform;
+  /** \brief Body odometry transform (body_link -> odom). */
+  KDL::Frame odom_transform;
+
+  /** \brief Body rotation about body_link frame */
+  KDL::Frame body_transform;
+
 
   // TODO: IMU?
 };
