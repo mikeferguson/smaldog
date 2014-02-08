@@ -65,38 +65,25 @@ TEST(smaldog_kinematics_test, ik_test_pitch_stance)
   EXPECT_TRUE(k.solveIK(lf, rr, rf, lr, 0.0, 0.1, 0.0, state));
 
   // lf leg joints
-  EXPECT_NEAR(-0.11621866456, state.joint_positions[1], 0.000001);
-  EXPECT_NEAR(1.215250663942, state.joint_positions[3], 0.000001);
-  EXPECT_NEAR(-2.15274196197, state.joint_positions[5], 0.000001);
+  EXPECT_NEAR(-0.1313477432, state.joint_positions[1], 0.000001);
+  EXPECT_NEAR(1.31145158059, state.joint_positions[3], 0.000001);
+  EXPECT_NEAR(-2.2949729657, state.joint_positions[5], 0.000001);
 
   // rr leg joints
-  EXPECT_NEAR(0.11621866456, state.joint_positions[6], 0.000001);
-  EXPECT_NEAR(-1.215250663942, state.joint_positions[8], 0.000001);
-  EXPECT_NEAR(2.15274196197, state.joint_positions[10], 0.000001);
+  EXPECT_NEAR(0.10430076344, state.joint_positions[6], 0.000001);
+  EXPECT_NEAR(-1.1113089435, state.joint_positions[8], 0.000001);
+  EXPECT_NEAR(2.00684394568, state.joint_positions[10], 0.000001);
 
   // rf leg joints
-  EXPECT_NEAR(0.11621866456, state.joint_positions[0], 0.000001);
-  EXPECT_NEAR(1.215250663942, state.joint_positions[2], 0.000001);
-  EXPECT_NEAR(-2.15274196197, state.joint_positions[4], 0.000001);
+  EXPECT_NEAR(0.13134774328, state.joint_positions[0], 0.000001);
+  EXPECT_NEAR(1.31145158059, state.joint_positions[2], 0.000001);
+  EXPECT_NEAR(-2.2949729657, state.joint_positions[4], 0.000001);
 
   // lr leg joints
-  EXPECT_NEAR(-0.11621866456, state.joint_positions[7], 0.000001);
-  EXPECT_NEAR(-1.215250663942, state.joint_positions[9], 0.000001);
-  EXPECT_NEAR(2.15274196197, state.joint_positions[11], 0.000001);
-
-  double x, y, z, w;
-  state.body_transform.M.GetQuaternion(x, y, z, w);
-
-  EXPECT_NEAR(0.0, x, 0.000001);
-  EXPECT_NEAR(0.0, y, 0.000001);
-  EXPECT_NEAR(0.0, z, 0.000001);
-  EXPECT_NEAR(1.0, w, 0.000001);
-
-  EXPECT_NEAR(0.0, state.odom_transform.p.x(), 0.000001);
-  EXPECT_NEAR(0.0, state.odom_transform.p.y(), 0.000001);
-  EXPECT_NEAR(0.08, state.odom_transform.p.z(), 0.000001);
+  EXPECT_NEAR(-0.1043007634, state.joint_positions[7], 0.000001);
+  EXPECT_NEAR(-1.1113089435, state.joint_positions[9], 0.000001);
+  EXPECT_NEAR(2.00684394568, state.joint_positions[11], 0.000001);
 }
-
 
 TEST(smaldog_kinematics_test, ik_test_out_of_bounds)
 {
