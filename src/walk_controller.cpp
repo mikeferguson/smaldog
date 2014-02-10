@@ -82,7 +82,6 @@ public:
       // 3. execute action
       client_.sendGoal(goal);
       client_.waitForResult(ros::Duration(5.0));
-      std::cout << "DONE" << std::endl;
     }
     else
     {

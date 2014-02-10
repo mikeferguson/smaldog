@@ -62,7 +62,6 @@ public:
       if (state.leg_contact_likelihood[i] > 0.5 &&
           last_state_.leg_contact_likelihood[i] > 0.5)
       {
-        ROS_INFO_STREAM("Using leg " << i);
         KDL::Vector prev;
         KDL::Vector poses[4];
         /* Use forward kinematics to get last position */
@@ -84,7 +83,6 @@ public:
         KDL::Vector motion = prev - poses[i];
         last_state_.odom_transform.p += motion;
         state.odom_transform.p += motion;
-        ROS_INFO_STREAM("Odometry of " << motion.x() << " " << motion.y() << " " << motion.z());
         break;
       }
     }
