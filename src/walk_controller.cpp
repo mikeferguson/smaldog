@@ -18,14 +18,14 @@
 
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include <tf/transform_broadcaster.h>
-#include <tf_conversions/tf_kdl.h>
 
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/JointState.h>
 
 #include <smaldog/kinematics/kinematics_solver.h>
+#include <smaldog/kinematics/odometry.h>
+#include <smaldog/planners/classical_crawl.h>
 #include <smaldog/stability/visualization.h>
 
 namespace smaldog
@@ -43,7 +43,9 @@ public:
     client_("body_controller/follow_joint_trajectory", true),
     cog_publisher_(nh),
     support_publisher_(nh),
-    solver_(0.038, 0.172, 0.050, 0.065, 0.088)
+    solver_(0.038, 0.172, 0.050, 0.065, 0.088),
+    odom_(&solver_),
+    crawl_(&solver_)
   {
     /* Connect to body_controller action */
     ROS_INFO("Waiting for body_controller...");
@@ -65,39 +67,27 @@ public:
     current_state_.leg_contact_likelihood[1] = 1.0;
     current_state_.leg_contact_likelihood[2] = 1.0;
     current_state_.leg_contact_likelihood[3] = 1.0;
-
-    /* Test Kinematics */
-    KDL::Vector lf(0.12, 0.07, -0.05);
-    current_state_.leg_contact_likelihood[0] = 0;
-    KDL::Vector rr(-0.09, -0.05, -0.1);
-    KDL::Vector rf(0.1, -0.05, -0.1);
-    KDL::Vector lr(-0.09, 0.07, -0.1);
-
-    RobotState state;
-
-    if (solver_.solveIK(lf, rr, rf, lr, 0.0, -0.1, 0.0, state))
-    {
-      current_state_.body_transform.M = state.body_transform.M;
-
-      control_msgs::FollowJointTrajectoryGoal goal;
-      goal.trajectory.joint_names = state.joint_names;
-      goal.trajectory.points.resize(1);
-      goal.trajectory.points[0].positions = state.joint_positions;
-      goal.trajectory.points[0].time_from_start = ros::Duration(1.0);
-      goal.trajectory.header.stamp = ros::Time::now();
-      client_.sendGoal(goal);
-      client_.waitForResult(ros::Duration(5.0));
-    }
-
-    std::cout << "DONE" << std::endl;
   }
   // add ability to select planner?
 
   bool update(ros::Time time)
   {
     // 1. update planner goals
+    crawl_.setForwardVelocity(0.025);
+
     // 2. plan next step
-    // 3. execute action
+    control_msgs::FollowJointTrajectoryGoal goal;
+    if (crawl_.getNextStep(current_state_, goal.trajectory))
+    {
+      // 3. execute action
+      client_.sendGoal(goal);
+      client_.waitForResult(ros::Duration(5.0));
+      std::cout << "DONE" << std::endl;
+    }
+    else
+    {
+      std::cerr << "UNABLE TO CRAWL" << std::endl;
+    }
   }
 
 private:
@@ -118,10 +108,8 @@ private:
     cog_publisher_.publish(current_state_);
     support_publisher_.publish(current_state_, solver_);
 
-    /* Publish odometry */
-    tf::Transform t;
-    tf::transformKDLToTF(current_state_.odom_transform * current_state_.body_transform, t);
-    broadcaster_.sendTransform(tf::StampedTransform(t, ros::Time::now(), "odom", "body_link"));
+    /* Update odometry */
+    odom_.update(current_state_);
   }
 
   /** \brief Callback for command velocity from higher level planner or controller */
@@ -136,10 +124,12 @@ private:
 
   ros::Subscriber cmd_vel_sub_;
   ros::Subscriber state_sub_;
-  tf::TransformBroadcaster broadcaster_;
 
   RobotState current_state_;
   KinematicsSolver solver_;
+
+  WalkingOdometry odom_;
+  ClassicalCrawl crawl_;
 };
 
 }  // namespace smaldog
@@ -150,7 +140,14 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   smaldog::WalkController* w = new smaldog::WalkController(nh);
-  ros::spin();
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  while (ros::ok())
+  {
+    w->update(ros::Time::now());
+  }
 
   return 0;
 }

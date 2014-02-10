@@ -28,14 +28,6 @@
 namespace smaldog
 {
 
-enum Legs
-{
-  LEFT_FRONT,
-  RIGHT_REAR,
-  RIGHT_FRONT,
-  LEFT_REAR
-};
-
 /**
  *  \brief This is the whole body kinematics solver.
  */

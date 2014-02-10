@@ -26,6 +26,14 @@
 namespace smaldog
 {
 
+enum Legs
+{
+  LEFT_FRONT,
+  RIGHT_REAR,
+  RIGHT_FRONT,
+  LEFT_REAR
+};
+
 /**
  *  \brief State of the robot. This is used both as a state during planning,
  *         and for representing the robot's present state at execution time.

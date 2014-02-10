@@ -37,23 +37,15 @@ public:
   Planner() {}
   virtual ~Planner() {}
 
-  /**
-   *  \brief Set the state of the robot, including where joints are, which
-   *         legs are on the ground, etc.
-   */
-  bool setState(const RobotState& state) = 0;
-
-  bool setForwardVelocity(double x) = 0;
-  bool setStrafingVelocity(double y) = 0;
-  bool setTurningVelocity(double theta) = 0;
+  virtual bool setForwardVelocity(double x) = 0;
+  virtual bool setStrafingVelocity(double y) = 0;
+  virtual bool setTurningVelocity(double theta) = 0;
 
   /**
    *  \brief Generates a trajectory for the next step.
    */
-  bool getNextStep(trajectory_msgs::JointTrajectory& trajectory) = 0;
-
-private:
-
+  virtual bool getNextStep(RobotState& state,
+                           trajectory_msgs::JointTrajectory& trajectory) = 0;
 };
 
 }  // namespace smaldog
