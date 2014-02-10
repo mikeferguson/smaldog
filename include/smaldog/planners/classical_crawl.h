@@ -47,9 +47,23 @@ public:
     }
   }
 
-  bool setForwardVelocity(double x) { x_ = x; }
-  bool setStrafingVelocity(double y) { y_ = y; }
-  bool setTurningVelocity(double theta) { theta_ = theta; }
+  bool setForwardVelocity(double x)
+  {
+    x_ = x;
+    return true;
+  }
+
+  bool setStrafingVelocity(double y)
+  {
+    y_ = y;
+    return true;
+  }
+
+  bool setTurningVelocity(double theta)
+  {
+    theta_ = theta;
+    return true;
+  }
 
   bool getNextStep(RobotState& state,
                    trajectory_msgs::JointTrajectory& trajectory)

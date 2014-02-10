@@ -88,6 +88,8 @@ public:
     {
       std::cerr << "UNABLE TO CRAWL" << std::endl;
     }
+
+    return true;
   }
 
 private:

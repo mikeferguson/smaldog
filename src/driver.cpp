@@ -181,7 +181,7 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
         (recv_buffer_[0] == 'S') && (recv_buffer_[1] == 'M') &&
         (recv_buffer_[2] == 'A') && (recv_buffer_[3] == 'L') &&
         /* We only use full_sync in driver, so this is MODEL_L/H */
-        (recv_buffer_[4] ==  45) || (recv_buffer_[5] == 1))
+        (recv_buffer_[4] ==  46) && (recv_buffer_[5] == 1))
     {
       // TODO: extract system time?
 

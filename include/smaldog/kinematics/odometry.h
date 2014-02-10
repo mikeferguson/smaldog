@@ -95,7 +95,9 @@ public:
     /* Publish odometry */
     tf::Transform t;
     tf::transformKDLToTF(last_state_.odom_transform * last_state_.body_transform, t);
-    broadcaster_.sendTransform(tf::StampedTransform(t, ros::Time::now(), "odom", "body_link"));    
+    broadcaster_.sendTransform(tf::StampedTransform(t, ros::Time::now(), "odom", "body_link"));
+
+    return true;
   }
 
 private:
