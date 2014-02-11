@@ -37,6 +37,8 @@ class CenterOfGravityPublisher
 public:
   CenterOfGravityPublisher(ros::NodeHandle nh)
   {
+    point_.header.frame_id = "odom";
+    point_.point.z = 0.0;
     publisher_ = nh.advertise<geometry_msgs::PointStamped>("center_of_gravity", 10);
   }
   ~CenterOfGravityPublisher() {}
@@ -44,17 +46,19 @@ public:
   void publish(const RobotState& state)
   {
     /* Center of gravity is simply the projection of the body_link frame */
-    geometry_msgs::PointStamped p;
-    p.header.frame_id = "odom";
-    p.header.stamp = ros::Time::now();
-    p.point.x = state.odom_transform.p.x();
-    p.point.y = state.odom_transform.p.y();
-    p.point.z = 0.0;
-    publisher_.publish(p);
+    if (fabs(state.odom_transform.p.x()-point_.point.x) > 0.001 ||
+        fabs(state.odom_transform.p.y()-point_.point.y) > 0.001)
+    {
+      point_.header.stamp = ros::Time::now();
+      point_.point.x = state.odom_transform.p.x();
+      point_.point.y = state.odom_transform.p.y();
+      publisher_.publish(point_);
+    }
   }
 
 private:
   ros::Publisher publisher_;
+  geometry_msgs::PointStamped point_;
 };
 
 /**
