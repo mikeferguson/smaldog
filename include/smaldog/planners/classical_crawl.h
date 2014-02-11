@@ -22,6 +22,7 @@
 #include <smaldog/robot_state.h>
 #include <smaldog/kinematics/kinematics_solver.h>
 #include <smaldog/planners/planner.h>
+#include <smaldog/stability/cog_trajectory.h>
 
 namespace smaldog
 {
@@ -33,7 +34,7 @@ class ClassicalCrawl : public Planner
 {
 public:
   ClassicalCrawl(KinematicsSolver * solver) : solver_(solver),
-    x_(0.0), y_(0.0), theta_(0.0), swing_leg_(LEFT_FRONT)
+    x_(0.0), y_(0.0), theta_(0.0), swing_leg_(RIGHT_REAR)
   {
     /* Get default stance */
     RobotState state;
@@ -43,8 +44,11 @@ public:
     for (size_t i = 0; i < 4; ++i)
     {
       poses_[i].z(poses_[i].z() * 0.65);
-      poses_[i].x(poses_[i].x() + 0.0125);
     }
+    poses_[LEFT_FRONT].x(poses_[LEFT_FRONT].x() + 0.0125);
+    poses_[RIGHT_FRONT].x(poses_[RIGHT_FRONT].x() + 0.0125);
+    poses_[LEFT_REAR].x(poses_[LEFT_REAR].x() - 0.0125);
+    poses_[RIGHT_REAR].x(poses_[RIGHT_REAR].x() - 0.0125);
   }
 
   bool setForwardVelocity(double x)
@@ -70,14 +74,18 @@ public:
   {
     if (moving())
     {
-      // TODO: swing COG
+      std::cout << "step " << swing_leg_ << std::endl;
+
+      /* Center of gravity shift */
+      KDL::Vector cog;
 
       RobotState temp;
       trajectory.joint_names = temp.joint_names;
       trajectory.points.resize(4);
 
       /* First point, where we are */
-      if (!solver_->solveIK(poses_[0], poses_[1], poses_[2], poses_[3], 0.0, 0.0, 0.0, temp))
+      computeCOGShift(poses_[0], poses_[1], poses_[2], poses_[3], swing_leg_ * 0.25, cog);
+      if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[0].positions = temp.joint_positions;
       trajectory.points[0].time_from_start = ros::Duration(0.0);
@@ -91,7 +99,8 @@ public:
           poses_[i].z(poses_[i].z() + 0.02);
         }
       }
-      if (!solver_->solveIK(poses_[0], poses_[1], poses_[2], poses_[3], 0.0, 0.0, 0.0, temp))
+      computeCOGShift(poses_[0], poses_[1], poses_[2], poses_[3], swing_leg_ * 0.25 + 0.05, cog);
+      if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[1].positions = temp.joint_positions;
       trajectory.points[1].time_from_start = ros::Duration(0.25);
@@ -104,7 +113,8 @@ public:
         else
           poses_[i].x(poses_[i].x() - x_/3.0);
       }
-      if (!solver_->solveIK(poses_[0], poses_[1], poses_[2], poses_[3], 0.0, 0.0, 0.0, temp))
+      computeCOGShift(poses_[0], poses_[1], poses_[2], poses_[3], swing_leg_ * 0.25 + 0.2, cog);
+      if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[2].positions = temp.joint_positions;
       trajectory.points[2].time_from_start = ros::Duration(0.75);
@@ -118,7 +128,8 @@ public:
           poses_[i].z(poses_[i].z() - 0.02);
         }
       }
-      if (!solver_->solveIK(poses_[0], poses_[1], poses_[2], poses_[3], 0.0, 0.0, 0.0, temp))
+      computeCOGShift(poses_[0], poses_[1], poses_[2], poses_[3], swing_leg_ * 0.25 + 0.25, cog);
+      if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[3].positions = temp.joint_positions;
       trajectory.points[3].time_from_start = ros::Duration(1.0);
