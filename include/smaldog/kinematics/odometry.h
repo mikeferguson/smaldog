@@ -37,7 +37,7 @@ class WalkingOdometry
 public:
   WalkingOdometry(KinematicsSolver * solver) :
     initialized_(false), solver_(solver)
-  {    
+  {
   }
 
   /**
@@ -51,9 +51,30 @@ public:
       last_state_.joint_positions = state.joint_positions;
       last_state_.odom_transform = state.odom_transform;
       last_state_.leg_contact_likelihood = state.leg_contact_likelihood;
-      initialized_ = true;
-      ROS_INFO("Odometry Initialized");
-      return true;
+
+      /* Use forward kinematics to get starting position */
+      KDL::Vector poses[4];
+      if (!solver_->solveFK(state, poses[0], poses[1], poses[2], poses[3]))
+      {
+        ROS_ERROR("Unable to compute forward kinematics");
+        return false;
+      }
+
+      /* Set a starting Z to the first leg that is on ground */
+      for (size_t i = 0; i < 4; ++i)
+      {
+        if (state.leg_contact_likelihood[i] > 0.5)
+        {
+          last_state_.odom_transform.p.z(-poses[i].z());
+          initialized_ = true;
+          ROS_INFO("Odometry Initialized");
+          return true;
+        }
+      }
+
+      /* No legs on ground, can't initialize */
+      ROS_WARN_THROTTLE(5, "Cannot initialize odometry as no legs are on ground");
+      return false;
     }
 
     for (size_t i = 0; i < 4; ++i)
@@ -81,6 +102,7 @@ public:
 
         /* Compute motion */
         KDL::Vector motion = prev - poses[i];
+        motion.z(0.0);
         last_state_.odom_transform.p += motion;
         state.odom_transform.p += motion;
         break;
