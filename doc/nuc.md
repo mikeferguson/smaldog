@@ -12,3 +12,5 @@
  * Update to 3.8 kernel: sudo apt-get update; sudo apt-get install linux-image-3.8.0.....
  * Ethernet now works
  * sudo apt-get upgrade to update remaining packages
+ * sudo apt-get install git build-essential libeigen3-dev
+ * sudo apt-get install ros-hydro-ros-base ros-hydro-common-msgs ros-hydro-hokuyo-node ros-hydro-tf
