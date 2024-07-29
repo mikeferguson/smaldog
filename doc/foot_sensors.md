@@ -1,14 +1,12 @@
-##Foot Sensor Notes
+## Foot Sensor Notes
 
-###Design Explorations
+### Design Explorations
 
 Previous "switch" feet proved problematic. Ideally, would have a non-contact
 sensor.
 
 TI makes the LDC1000, which can allegedly measure the displacement of a spring.
-However, it appears that twist/etc can also change the inductance. The [dev
-board](http://www.digikey.com/product-search/en/programmers-development-systems/evaluation-boards-sensors/2622557?k=ldc1000)
-is only $30, might we worth considering.
+However, it appears that twist/etc can also change the inductance.
 
 One of the design notes for the AS5045/5048 magnetic encoder chip is to use it
 as a pushbutton, as you can get a fairly nice digital reading of the magnetic
