@@ -51,7 +51,7 @@ bool TrajectorySampler::init(rclcpp::Node::SharedPtr node)
     std::bind(&TrajectorySampler::handleAccepted, this, _1)
   );
 
-  feedback_timer_ = node->create_wall_timer(std::chrono::milliseconds(40),
+  feedback_timer_ = node->create_wall_timer(std::chrono::milliseconds(50),
                       std::bind(&TrajectorySampler::feedbackCb, this));
 
   /* Setup trajectory message callback */

@@ -24,7 +24,7 @@ namespace smaldog
 
 udp_driver::udp_driver(const rclcpp::NodeOptions & options)
  : rclcpp::Node("smaldog", options),
-   milliseconds_(20),
+   milliseconds_(50),
    timer_(io_service_, boost::posix_time::milliseconds(milliseconds_)),
    socket_(io_service_)
 {

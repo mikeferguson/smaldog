@@ -81,7 +81,7 @@ public:
     rclcpp::Time now = this->now();
 
     // 1. update planner goals
-    crawl_.setForwardVelocity(0.025);
+    crawl_.setForwardVelocity(0.05);
 
     // 2. plan next step
     FollowTrajectory::Goal goal;

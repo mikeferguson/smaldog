@@ -45,7 +45,7 @@ public:
     solver_->solveFK(state, poses_[0], poses_[1], poses_[2], poses_[3]);
     for (size_t i = 0; i < 4; ++i)
     {
-      poses_[i].z(poses_[i].z() * 0.65);
+      poses_[i].z(poses_[i].z() * 0.7);
     }
     poses_[LEFT_FRONT].x(poses_[LEFT_FRONT].x() + 0.0125);
     poses_[RIGHT_FRONT].x(poses_[RIGHT_FRONT].x() + 0.0125);
