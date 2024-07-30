@@ -103,6 +103,11 @@ public:
       {
         if (this->now() > timeout)
         {
+          RCLCPP_ERROR(this->get_logger(), "Timed out waiting for action to complete");
+          break;
+        }
+        if (!rclcpp::ok())
+        {
           break;
         }
         rclcpp::sleep_for(std::chrono::milliseconds(50));
@@ -161,12 +166,12 @@ private:
     }
   }
 
-  void feedbackCb(GoalHandle::SharedPtr, const std::shared_ptr<const FollowTrajectory::Feedback> feedback)
+  void feedbackCb(GoalHandle::SharedPtr, const std::shared_ptr<const FollowTrajectory::Feedback>)
   {
     // TODO
   }
 
-  void resultCb(const GoalHandle::WrappedResult & result)
+  void resultCb(const GoalHandle::WrappedResult &)
   {
     goal_finished_ = true;
   }

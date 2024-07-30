@@ -48,7 +48,7 @@ struct RobotData
   uint16_t REG_78;
 };
 
-int main(int argc, char **argv)
+int main()
 {
   RobotData data;
   data.model_number = 302;

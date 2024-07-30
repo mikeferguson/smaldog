@@ -35,8 +35,8 @@ namespace smaldog
 class ClassicalCrawl : public Planner
 {
 public:
-  ClassicalCrawl(KinematicsSolver * solver) : solver_(solver),
-    x_(0.0), y_(0.0), theta_(0.0), swing_leg_(RIGHT_REAR)
+  ClassicalCrawl(KinematicsSolver * solver) :
+    x_(0.0), y_(0.0), theta_(0.0), swing_leg_(RIGHT_REAR), solver_(solver)
   {
     /* Get default stance */
     RobotState state;
@@ -179,7 +179,7 @@ private:
   }
 
   double x_, y_, theta_;
-  int swing_leg_;
+  size_t swing_leg_;
 
   KDL::Vector poses_[4];
   KinematicsSolver* solver_;

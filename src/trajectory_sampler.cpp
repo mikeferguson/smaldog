@@ -79,8 +79,8 @@ bool TrajectorySampler::sample(rclcpp::Time time, std::vector<double>& positions
   /* Lock and sample */
   trajectory_mutex_.lock();
   /* Determine which segment we are in */
-  while ((trajectory_.segment + 1 < trajectory_.points.size()) &&
-         (trajectory_.points[trajectory_.segment+1].time < time))
+  while ((static_cast<size_t>(trajectory_.segment + 1) < trajectory_.points.size()) &&
+         (trajectory_.points[trajectory_.segment + 1].time < time))
     ++trajectory_.segment;
   /* Sample the segment */
   if (trajectory_.segment == -1)
@@ -88,7 +88,7 @@ bool TrajectorySampler::sample(rclcpp::Time time, std::vector<double>& positions
     /* Time not started, return first point */
     feedback_->desired.positions = trajectory_.points[0].positions;
   }
-  else if (trajectory_.segment + 1 >= trajectory_.points.size())
+  else if (static_cast<size_t>(trajectory_.segment + 1) >= trajectory_.points.size())
   {
     /* End of trajectory, return last point */
     feedback_->desired.positions = trajectory_.points[trajectory_.segment].positions;
@@ -98,6 +98,7 @@ bool TrajectorySampler::sample(rclcpp::Time time, std::vector<double>& positions
       auto result = std::make_shared<FollowJointTrajectoryAction::Result>();
       result->error_code = result->SUCCESSFUL;
       active_goal_->succeed(result);
+      active_goal_.reset();
       RCLCPP_DEBUG(node_->get_logger(), "Completed");
     }
   }
@@ -123,7 +124,7 @@ bool TrajectorySampler::initialized()
 }
 
 rclcpp_action::GoalResponse
-TrajectorySampler::handleGoal(const rclcpp_action::GoalUUID & uuid,
+TrajectorySampler::handleGoal(const rclcpp_action::GoalUUID &,
   std::shared_ptr<const FollowJointTrajectoryAction::Goal> goal_handle)
 {
   if (goal_handle->trajectory.joint_names.size() != joints_.size())
@@ -157,7 +158,7 @@ void TrajectorySampler::handleAccepted(const std::shared_ptr<FollowJointTrajecto
   {
     active_goal_->abort(result);
     active_goal_.reset();
-    RCLCPP_DEBUG(node_->get_logger(), "Preempted trajectory");
+    RCLCPP_WARN(node_->get_logger(), "Preempted trajectory");
   }
 
   if (goal->trajectory.points.empty())
@@ -168,6 +169,7 @@ void TrajectorySampler::handleAccepted(const std::shared_ptr<FollowJointTrajecto
     trajectory_mutex_.unlock();
     result->error_code = result->SUCCESSFUL;
     goal_handle->succeed(result);
+    RCLCPP_WARN(node_->get_logger(), "Received empty trajectory, stopping execution");
     return;
   }
 
@@ -177,6 +179,7 @@ void TrajectorySampler::handleAccepted(const std::shared_ptr<FollowJointTrajecto
   /* Lock and update trajectory */
   trajectory_mutex_.lock();
   trajectory_ = t;
+  active_goal_ = goal_handle;
   trajectory_mutex_.unlock();
 }
 

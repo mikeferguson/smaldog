@@ -24,9 +24,9 @@ namespace smaldog
 
 udp_driver::udp_driver(const rclcpp::NodeOptions & options)
  : rclcpp::Node("smaldog", options),
-   socket_(io_service_),
    milliseconds_(20),
-   timer_(io_service_, boost::posix_time::milliseconds(milliseconds_))
+   timer_(io_service_, boost::posix_time::milliseconds(milliseconds_)),
+   socket_(io_service_)
 {
   /* TODO: Setup IMU publisher */
 
