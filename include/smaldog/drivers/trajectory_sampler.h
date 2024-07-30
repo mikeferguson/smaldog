@@ -16,18 +16,18 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_
-#define SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_
+#ifndef SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H
+#define SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <ros/ros.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <actionlib/server/simple_action_server.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
 
 namespace smaldog
 {
@@ -36,7 +36,7 @@ class TrajectorySampler
 {
   struct TrajectoryPoint
   {
-    ros::Time time;
+    rclcpp::Time time;
     std::vector<double> positions;
   };
 
@@ -46,7 +46,8 @@ class TrajectorySampler
     int segment;
   };
 
-  typedef actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> server_t;
+  using FollowJointTrajectoryAction = control_msgs::action::FollowJointTrajectory;
+  using FollowJointTrajectoryGoal = rclcpp_action::ServerGoalHandle<FollowJointTrajectoryAction>;
 
 public:
   /**
@@ -59,9 +60,9 @@ public:
 
   /**
    *  \brief Setup ros publishers and subscribers.
-   *  \param nh Node-local node handle.
+   *  \param node Node-local node handle.
    */
-  bool init(ros::NodeHandle& nh);
+  bool init(rclcpp::Node::SharedPtr node);
 
   /**
    *  \brief Sample at this time step.
@@ -71,36 +72,52 @@ public:
    *         always in same order as joint names passed in.
    *  \returns True if we were able to sample for this time.
    */
-  bool sample(ros::Time time, std::vector<double>& positions);
+  bool sample(rclcpp::Time time, std::vector<double>& positions);
+
+  /**
+   *  \brief Returns true if sampler is initialized.
+   */
+  bool initialized();
 
 private:
+  rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID & uuid,
+    std::shared_ptr<const FollowJointTrajectoryAction::Goal> goal_handle);
+  rclcpp_action::CancelResponse handleCancel(const std::shared_ptr<FollowJointTrajectoryGoal> goal_handle);
+  void handleAccepted(const std::shared_ptr<FollowJointTrajectoryGoal> goal_handle);
+
   /**
-   *  \brief Callback for the trajectory action server.
+   * \brief Publish feedback if there is an active goal
    */
-  void actionCb(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal);
+  void feedbackCb();
 
   /**
    *  \brief Callback for a raw trajectory message.
    */
-  void messageCb(const trajectory_msgs::JointTrajectoryConstPtr& msg);
+  void messageCb(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg);
 
   /**
    *  \brief Create a new trajectory.
    */
-  Trajectory createTrajectory(const trajectory_msgs::JointTrajectory& msg);
+  Trajectory createTrajectory(const trajectory_msgs::msg::JointTrajectory& msg);
+
 
   std::string namespace_;
   std::vector<std::string> joints_;
 
-  boost::shared_ptr<server_t> server_;
-  ros::Subscriber subscriber_;
-
-  control_msgs::FollowJointTrajectoryFeedback feedback_;
+  // rclcpp action server
+  rclcpp::Node::SharedPtr node_;
+  rclcpp_action::Server<FollowJointTrajectoryAction>::SharedPtr server_;
+  std::shared_ptr<FollowJointTrajectoryGoal> active_goal_;
+  std::shared_ptr<FollowJointTrajectoryAction::Feedback> feedback_;
+  rclcpp::TimerBase::SharedPtr feedback_timer_;
+  rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr subscriber_;
 
   Trajectory trajectory_;
   boost::mutex trajectory_mutex_;
+
+  bool initialized_;
 };
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H_
+#endif  // SMALDOG_DRIVERS_TRAJECTORY_SAMPLER_H

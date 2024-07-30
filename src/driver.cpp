@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,23 +16,25 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
+#include <boost/bind.hpp>
 #include "smaldog/drivers/driver.h"
 
 namespace smaldog
 {
 
-udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
- : socket_(io_service),
+udp_driver::udp_driver(const rclcpp::NodeOptions & options)
+ : rclcpp::Node("smaldog", options),
+   socket_(io_service_),
    milliseconds_(20),
-   timer_(io_service, boost::posix_time::milliseconds(milliseconds_))
+   timer_(io_service_, boost::posix_time::milliseconds(milliseconds_))
 {
   /* TODO: Setup IMU publisher */
 
   /* Setup joint state publisher */
-  joint_state_pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
- 
+  joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+
   /* Setup robot state publisher */
-  robot_state_pub_ = nh.advertise<smaldog::State>("robot_state", 10);
+  robot_state_pub_ = this->create_publisher<smaldog::msg::State>("robot_state", 10);
 
   joint_msg_.name.resize(12);  // 12 servos
   joint_msg_.position.resize(12);
@@ -96,28 +98,34 @@ udp_driver::udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh)
 
   /* Setup whole body trajectory + sampler */
   body_sampler_.reset(new TrajectorySampler("body_controller", joint_msg_.name));
-  body_sampler_->init(nh);
 
   /* Get ip address parameter */
-  ros::NodeHandle nhp("~");
-  if (!nhp.getParam("ip_address", ip_address_))
-    ip_address_ = "192.168.0.42";
+  ip_address_ = this->declare_parameter<std::string>("ip_address", "192.168.0.42");
+  RCLCPP_INFO(this->get_logger(), "IP Address: %s", ip_address_.c_str());
 
   /* Any socket will do for sending/recieving data */
   socket_.open(udp::v4());
   start_async_receive();
 
   /* Everything is setup, start internal timer loop */
-  timer_.async_wait(boost::bind(&udp_driver::updateCallback, this, _1));
+  timer_.async_wait(std::bind(&udp_driver::updateCallback, this, std::placeholders::_1));
 }
 
 void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
 {
   /* ROS catches the ctrl-c, but we need to stop the io_service to exit */
-  if(!ros::ok())
+  if(!rclcpp::ok())
   {
-    socket_.get_io_service().stop();
+    io_service_.stop();
     return;
+  }
+
+  /* Setup whole body trajectory + sampler */
+  if (!body_sampler_->initialized())
+  {
+    /* Has to be done here, because shared_from_this() does not work in constructor */
+    RCLCPP_INFO(this->get_logger(), "Initializing body sampler");
+    body_sampler_->init(shared_from_this());
   }
 
   /* Send updated state */
@@ -126,7 +134,7 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
   {
     /* Get desired positions */
     std::vector<double> positions = joint_msg_.position;
-    bool result = body_sampler_->sample(ros::Time::now(), positions);
+    bool result = body_sampler_->sample(this->now(), positions);
 
     /* Setup message */
     boost::array<uint8_t, 4 + 4 + 26> send_buf;
@@ -160,7 +168,7 @@ void udp_driver::updateCallback(const boost::system::error_code& /*e*/)
 
   /* need to set a new expiration time before calling async_wait again */
   timer_.expires_at(timer_.expires_at() + boost::posix_time::milliseconds(milliseconds_));
-  timer_.async_wait(boost::bind(&udp_driver::updateCallback, this, _1));
+  timer_.async_wait(std::bind(&udp_driver::updateCallback, this, std::placeholders::_1));
 }
 
 void udp_driver::start_async_receive()
@@ -212,7 +220,7 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
         if (val >= 0)
           joint_msg_.position[s] = (val - joint_offsets_[s]) * joint_scales_[s];
         else
-          ROS_DEBUG_STREAM("Read error on servo " << s);
+          RCLCPP_DEBUG(this->get_logger(), "Read error on servo %i", static_cast<int>(s));
       }
 
       /* Convert run stop */
@@ -220,23 +228,27 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
     }
     else
     {
-      ROS_ERROR("Invalid packet recieved");
+      RCLCPP_ERROR(this->get_logger(), "Invalid packet recieved");
     }
 
-    if(ros::ok())
+    if (rclcpp::ok())
+    {
       start_async_receive();
+    }
   }
 
   /* Publish new joint_states */
-  joint_msg_.header.stamp = ros::Time::now();
-  joint_state_pub_.publish(joint_msg_);
+  joint_msg_.header.stamp = this->now();
+  joint_state_pub_->publish(joint_msg_);
 
   /* Publish new robot_state */
-  robot_state_pub_.publish(state_msg_);
+  robot_state_pub_->publish(state_msg_);
 
   /* ROS catches the ctrl-c, but we need to stop the io_service to exit */
-  if(!ros::ok())
-    socket_.get_io_service().stop();
+  if (!rclcpp::ok())
+  {
+    io_service_.stop();
+  }
 }
 
 }  // namespace smaldog
@@ -244,21 +256,23 @@ void udp_driver::handle_receive(const boost::system::error_code& error, std::siz
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "smaldog");
-  ros::NodeHandle nh;
+  rclcpp::init(argc, argv);
 
   try
   {
     /* io_service and driver class do all the heavy lifting */
-    boost::asio::io_service io_service;
-    smaldog::udp_driver driver(io_service, nh);
+    rclcpp::NodeOptions options;
+    std::shared_ptr<smaldog::udp_driver> driver;
+    driver.reset(new smaldog::udp_driver(options));
 
-    /* Use this for ROS_INFO, pub, subs... */
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
+    /* Use this for RCLCPP_INFO, pub, subs... */
+    using rclcpp::executors::SingleThreadedExecutor;
+    SingleThreadedExecutor executor;
+    executor.add_node(driver);
+    std::thread executor_thread(std::bind(&SingleThreadedExecutor::spin, &executor));
 
     /* Will block here until the end */
-    io_service.run();
+    driver->getIoService().run();
   }
   catch (std::exception& e)
   {

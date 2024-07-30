@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_STABILITY_FAST_QUAD_SHIFT_H_
-#define SMALDOG_STABILITY_FAST_QUAD_SHIFT_H_
+#ifndef SMALDOG_STABILITY_FAST_QUAD_SHIFT_H
+#define SMALDOG_STABILITY_FAST_QUAD_SHIFT_H
 
 #include <kdl/frames.hpp>
 #include <smaldog/robot_state.h>
@@ -39,4 +39,4 @@ bool computeFastQuadShift(const RobotState& state, KDL::Vector& shift);
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_STABILITY_FAST_QUAD_SHIFT_H_
+#endif  // SMALDOG_STABILITY_FAST_QUAD_SHIFT_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_STABILITY_COG_TRAJECTORY_H_
-#define SMALDOG_STABILITY_COG_TRAJECTORY_H_
+#ifndef SMALDOG_STABILITY_COG_TRAJECTORY_H
+#define SMALDOG_STABILITY_COG_TRAJECTORY_H
 
 #include <math.h>
 
-#include <ros/ros.h>
 #include <kdl/frames.hpp>
 #include <smaldog/robot_state.h>
 #include <smaldog/kinematics/kinematics_solver.h>
@@ -106,4 +105,4 @@ inline bool computeCOGShift(const KDL::Vector& lf, const KDL::Vector& rr,
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_STABILITY_COG_TRAJECTORY_H_
+#endif  // SMALDOG_STABILITY_COG_TRAJECTORY_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_ROBOT_STATE_H_
-#define SMALDOG_ROBOT_STATE_H_
+#ifndef SMALDOG_ROBOT_STATE_H
+#define SMALDOG_ROBOT_STATE_H
 
 #include <vector>
 #include <string>
@@ -83,4 +83,4 @@ public:
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_ROBOT_STATE_H_
+#endif  // SMALDOG_ROBOT_STATE_H

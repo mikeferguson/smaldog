@@ -22,41 +22,58 @@ namespace smaldog
 {
 
 TrajectorySampler::TrajectorySampler(const std::string ns, const std::vector<std::string> joints)
- : namespace_(ns), joints_(joints)
+ : namespace_(ns), joints_(joints), initialized_(false)
 {
-  /* Setup action feedback */ 
-  feedback_.joint_names = joints_;
-  feedback_.desired.positions.resize(joints_.size());    
-  feedback_.actual.positions.resize(joints_.size());    
-  feedback_.error.positions.resize(joints_.size());
+  /* Setup action feedback */
+  feedback_ = std::make_shared<FollowJointTrajectoryAction::Feedback>();
+  feedback_->joint_names = joints_;
+  feedback_->desired.positions.resize(joints_.size());    
+  feedback_->actual.positions.resize(joints_.size());    
+  feedback_->error.positions.resize(joints_.size());
 }
 
-bool TrajectorySampler::init(ros::NodeHandle& nh)
+bool TrajectorySampler::init(rclcpp::Node::SharedPtr node)
 {
+  using namespace std::placeholders;
+
+  /* Store this for logging and timing */
+  node_ = node;
+
   /* Setup action server */
-  server_.reset(new server_t(nh, namespace_+"/follow_joint_trajectory",
-                             boost::bind(&TrajectorySampler::actionCb, this, _1),
-                             false));
-  server_->start();
+  server_ = rclcpp_action::create_server<FollowJointTrajectoryAction>(
+    node->get_node_base_interface(),
+    node->get_node_clock_interface(),
+    node->get_node_logging_interface(),
+    node->get_node_waitables_interface(),
+    namespace_ + "/follow_joint_trajectory",
+    std::bind(&TrajectorySampler::handleGoal, this, _1, _2),
+    std::bind(&TrajectorySampler::handleCancel, this, _1),
+    std::bind(&TrajectorySampler::handleAccepted, this, _1)
+  );
+
+  feedback_timer_ = node->create_wall_timer(std::chrono::milliseconds(40),
+                      std::bind(&TrajectorySampler::feedbackCb, this));
 
   /* Setup trajectory message callback */
-  subscriber_ = nh.subscribe<trajectory_msgs::JointTrajectory>(
-    namespace_+"/trajectory", 5, boost::bind(&TrajectorySampler::messageCb, this, _1));
+  subscriber_ = node->create_subscription<trajectory_msgs::msg::JointTrajectory>(
+    namespace_ + "/trajectory", 5, std::bind(&TrajectorySampler::messageCb, this, _1));
+
+  initialized_ = true;
 
   return true;
 }
 
-bool TrajectorySampler::sample(ros::Time time, std::vector<double>& positions)
+bool TrajectorySampler::sample(rclcpp::Time time, std::vector<double>& positions)
 {
   /* Attempt to update actual positions */
-  if (positions.size() == feedback_.joint_names.size())
+  if (positions.size() == feedback_->joint_names.size())
   {
     for (size_t j = 0; j < positions.size(); ++j)
-      feedback_.actual.positions[j] = positions[j];
+      feedback_->actual.positions[j] = positions[j];
   }
 
   /* If we have no trajectory to sample, stop now */
-  if (trajectory_.points.size() == 0)
+  if (trajectory_.points.empty())
     return false;
 
   /* Lock and sample */
@@ -69,40 +86,79 @@ bool TrajectorySampler::sample(ros::Time time, std::vector<double>& positions)
   if (trajectory_.segment == -1)
   {
     /* Time not started, return first point */
-    feedback_.desired.positions = trajectory_.points[0].positions;
+    feedback_->desired.positions = trajectory_.points[0].positions;
   }
   else if (trajectory_.segment + 1 >= trajectory_.points.size())
   {
     /* End of trajectory, return last point */
-    feedback_.desired.positions = trajectory_.points[trajectory_.segment].positions;
+    feedback_->desired.positions = trajectory_.points[trajectory_.segment].positions;
     /* If we are executing an action, respond */
-    if (server_->isActive())
+    if (active_goal_)
     {
-      control_msgs::FollowJointTrajectoryResult result;
-      result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
-      server_->setSucceeded(result, "Completed.");
-      ROS_DEBUG("Completed");
+      auto result = std::make_shared<FollowJointTrajectoryAction::Result>();
+      result->error_code = result->SUCCESSFUL;
+      active_goal_->succeed(result);
+      RCLCPP_DEBUG(node_->get_logger(), "Completed");
     }
   }
   else
   {
-    double dt = (trajectory_.points[trajectory_.segment+1].time - trajectory_.points[trajectory_.segment].time).toSec();
-    double t = (time - trajectory_.points[trajectory_.segment].time).toSec() / dt;
+    double dt = (trajectory_.points[trajectory_.segment+1].time - trajectory_.points[trajectory_.segment].time).seconds();
+    double t = (time - trajectory_.points[trajectory_.segment].time).seconds() / dt;
     for (size_t i = 0; i < positions.size(); ++i)
     {
-      feedback_.desired.positions[i] = trajectory_.points[trajectory_.segment].positions[i] +
+      feedback_->desired.positions[i] = trajectory_.points[trajectory_.segment].positions[i] +
         (trajectory_.points[trajectory_.segment+1].positions[i] - trajectory_.points[trajectory_.segment].positions[i]) * t;
     }
   }
   trajectory_mutex_.unlock();
 
-  positions = feedback_.desired.positions;
+  positions = feedback_->desired.positions;
   return true;
 }
 
-void TrajectorySampler::actionCb(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal)
+bool TrajectorySampler::initialized()
 {
-  control_msgs::FollowJointTrajectoryResult result;
+  return initialized_;
+}
+
+rclcpp_action::GoalResponse
+TrajectorySampler::handleGoal(const rclcpp_action::GoalUUID & uuid,
+  std::shared_ptr<const FollowJointTrajectoryAction::Goal> goal_handle)
+{
+  if (goal_handle->trajectory.joint_names.size() != joints_.size())
+  {
+    RCLCPP_ERROR(node_->get_logger(), "Invalid number of joints");
+    return rclcpp_action::GoalResponse::REJECT;
+  }
+
+  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse
+TrajectorySampler::handleCancel(const std::shared_ptr<FollowJointTrajectoryGoal> goal_handle)
+{
+  if (active_goal_ && active_goal_->get_goal_id() == goal_handle->get_goal_id())
+  {
+    auto result = std::make_shared<FollowJointTrajectoryAction::Result>();
+    active_goal_->canceled(result);
+    active_goal_.reset();
+  }
+
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void TrajectorySampler::handleAccepted(const std::shared_ptr<FollowJointTrajectoryGoal> goal_handle)
+{
+  auto result = std::make_shared<FollowJointTrajectoryAction::Result>();
+  const auto goal = goal_handle->get_goal();
+
+  if (active_goal_)
+  {
+    active_goal_->abort(result);
+    active_goal_.reset();
+    RCLCPP_DEBUG(node_->get_logger(), "Preempted trajectory");
+  }
 
   if (goal->trajectory.points.empty())
   {
@@ -110,14 +166,8 @@ void TrajectorySampler::actionCb(const control_msgs::FollowJointTrajectoryGoalCo
     trajectory_mutex_.lock();
     trajectory_.points.clear();
     trajectory_mutex_.unlock();
-    return;
-  }
-
-  if (goal->trajectory.joint_names.size() != joints_.size())
-  {
-    result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
-    server_->setAborted(result, "Invalid number of joints");
-    ROS_ERROR("Invalid number of joints");
+    result->error_code = result->SUCCESSFUL;
+    goal_handle->succeed(result);
     return;
   }
 
@@ -128,28 +178,21 @@ void TrajectorySampler::actionCb(const control_msgs::FollowJointTrajectoryGoalCo
   trajectory_mutex_.lock();
   trajectory_ = t;
   trajectory_mutex_.unlock();
+}
 
-  /* Deal with feedback */
-  while (server_->isActive())
+void TrajectorySampler::feedbackCb()
+{
+  if (active_goal_)
   {
-    if (server_->isPreemptRequested())
-    {
-      control_msgs::FollowJointTrajectoryResult result;
-      server_->setPreempted(result, "Preempted");
-      ROS_DEBUG("Preempted");
-      break;
-    }
-
     /* Publish Feedback */
-    feedback_.header.stamp = ros::Time::now();
-    for (size_t i = 0; i < feedback_.error.positions.size(); ++i)
-      feedback_.error.positions[i] = feedback_.desired.positions[i] - feedback_.actual.positions[i];
-    server_->publishFeedback(feedback_);
-    ros::Duration(1/25.0).sleep();
+    feedback_->header.stamp = node_->now();
+    for (size_t i = 0; i < feedback_->error.positions.size(); ++i)
+      feedback_->error.positions[i] = feedback_->desired.positions[i] - feedback_->actual.positions[i];
+    active_goal_->publish_feedback(feedback_);
   }
 }
 
-void TrajectorySampler::messageCb(const trajectory_msgs::JointTrajectoryConstPtr& msg)
+void TrajectorySampler::messageCb(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg)
 {
   if (msg->points.empty())
   {
@@ -162,7 +205,7 @@ void TrajectorySampler::messageCb(const trajectory_msgs::JointTrajectoryConstPtr
 
   if (msg->joint_names.size() != joints_.size())
   {
-    ROS_ERROR("Invalid number of joints");
+    RCLCPP_ERROR(node_->get_logger(), "Invalid number of joints");
     return;
   }
 
@@ -176,23 +219,23 @@ void TrajectorySampler::messageCb(const trajectory_msgs::JointTrajectoryConstPtr
 }
 
 TrajectorySampler::Trajectory
-TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
+TrajectorySampler::createTrajectory(const trajectory_msgs::msg::JointTrajectory& msg)
 {
-  ros::Time time = ros::Time::now();
+  rclcpp::Time now = node_->now();
   Trajectory t;
 
   /* Make sure time is filled in */
-  ros::Time start = msg.header.stamp;
-  if (start == ros::Time(0))
-    start = time;
+  rclcpp::Time start = msg.header.stamp;
+  if (start.nanoseconds() == 0)
+    start = now;
 
   if (msg.points.size() < 2)
   {
     /* If we only have one new point, interpolate between present position and the new point */
     t.points.resize(2);
-    t.points[0].positions = feedback_.actual.positions;
+    t.points[0].positions = feedback_->actual.positions;
     t.points[1].positions = msg.points[0].positions;
-    t.points[0].time = time;
+    t.points[0].time = now;
     t.points[1].time = start + msg.points[0].time_from_start;
   }
   else
@@ -200,7 +243,7 @@ TrajectorySampler::createTrajectory(const trajectory_msgs::JointTrajectory& msg)
     /* Save old, relevant points */
     for (size_t i = 0; i < trajectory_.points.size(); ++i)
     {
-      if ((trajectory_.points[i].time > time) &&
+      if ((trajectory_.points[i].time > now) &&
           (trajectory_.points[i].time < start))
       {
         t.points.push_back(trajectory_.points[i]);

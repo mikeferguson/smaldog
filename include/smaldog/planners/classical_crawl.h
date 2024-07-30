@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_CLASSICAL_CRAWL_H_
-#define SMALDOG_CLASSICAL_CRAWL_H_
+#ifndef SMALDOG_CLASSICAL_CRAWL_H
+#define SMALDOG_CLASSICAL_CRAWL_H
 
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 #include <smaldog/robot_state.h>
 #include <smaldog/kinematics/kinematics_solver.h>
 #include <smaldog/planners/planner.h>
@@ -70,7 +72,8 @@ public:
   }
 
   bool getNextStep(RobotState& state,
-                   trajectory_msgs::JointTrajectory& trajectory)
+                   trajectory_msgs::msg::JointTrajectory& trajectory,
+                   rclcpp::Time& now)
   {
     if (moving())
     {
@@ -88,7 +91,7 @@ public:
       if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[0].positions = temp.joint_positions;
-      trajectory.points[0].time_from_start = ros::Duration(0.0);
+      trajectory.points[0].time_from_start = rclcpp::Duration::from_seconds(0.0);
 
       /* Second point, raise swing leg */
       for (size_t i = 0; i < 4; ++i)
@@ -103,7 +106,7 @@ public:
       if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[1].positions = temp.joint_positions;
-      trajectory.points[1].time_from_start = ros::Duration(0.25);
+      trajectory.points[1].time_from_start = rclcpp::Duration::from_seconds(0.25);
 
       /* Third point, swing legs forward */
       for (size_t i = 0; i < 4; ++i)
@@ -117,7 +120,7 @@ public:
       if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[2].positions = temp.joint_positions;
-      trajectory.points[2].time_from_start = ros::Duration(0.75);
+      trajectory.points[2].time_from_start = rclcpp::Duration::from_seconds(0.75);
 
       /* Fourth point, drop swing leg */
       for (size_t i = 0; i < 4; ++i)
@@ -132,7 +135,7 @@ public:
       if (!solver_->solveIK(poses_[0]+cog, poses_[1]+cog, poses_[2]+cog, poses_[3]+cog, 0.0, 0.0, 0.0, temp))
         return false;
       trajectory.points[3].positions = temp.joint_positions;
-      trajectory.points[3].time_from_start = ros::Duration(1.0);
+      trajectory.points[3].time_from_start = rclcpp::Duration::from_seconds(1.0);
 
       /* Update contact legs */
       for (size_t i = 0; i < state.leg_contact_likelihood.size(); ++i)
@@ -146,7 +149,7 @@ public:
       /* Update swing leg */
       swing_leg_ = (swing_leg_+1)%4;
 
-      trajectory.header.stamp = ros::Time::now();
+      trajectory.header.stamp = now;
       return true;
     }
     else
@@ -159,8 +162,8 @@ public:
         trajectory.joint_names = state.joint_names;
         trajectory.points.resize(1);
         trajectory.points[0].positions = s.joint_positions;
-        trajectory.points[0].time_from_start = ros::Duration(1.0);
-        trajectory.header.stamp = ros::Time::now();
+        trajectory.points[0].time_from_start = rclcpp::Duration::from_seconds(1.0);
+        trajectory.header.stamp = now;
         return true;
       }
       return false;
@@ -184,4 +187,4 @@ private:
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_ROBOT_STATE_H_
+#endif  // SMALDOG_CLASSICAL_CRAWL_H

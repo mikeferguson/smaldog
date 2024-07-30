@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_STABILITY_VISUALIZATION_H_
-#define SMALDOG_STABILITY_VISUALIZATION_H_
+#ifndef SMALDOG_STABILITY_VISUALIZATION_H
+#define SMALDOG_STABILITY_VISUALIZATION_H
 
-#include <ros/ros.h>
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/PolygonStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <geometry_msgs/msg/polygon_stamped.hpp>
 
 #include <smaldog/robot_state.h>
 #include <smaldog/kinematics/kinematics_solver.h>
@@ -30,35 +30,35 @@ namespace smaldog
 {
 
 /**
- *  \brief Wraps a ros::Publisher which sends a geometry_msgs::PointStamped for visualization.
+ *  \brief Wraps a ros::Publisher which sends a geometry_msgs::msg::PointStamped for visualization.
  */
 class CenterOfGravityPublisher
 {
 public:
-  CenterOfGravityPublisher(ros::NodeHandle nh)
+  CenterOfGravityPublisher(rclcpp::Node::SharedPtr node)
   {
     point_.header.frame_id = "odom";
     point_.point.z = 0.0;
-    publisher_ = nh.advertise<geometry_msgs::PointStamped>("center_of_gravity", 10);
+    publisher_ = node->create_publisher<geometry_msgs::msg::PointStamped>("center_of_gravity", 10);
   }
   ~CenterOfGravityPublisher() {}
 
-  void publish(const RobotState& state)
+  void publish(const RobotState& state, rclcpp::Time& now)
   {
     /* Center of gravity is simply the projection of the body_link frame */
     if (fabs(state.odom_transform.p.x()-point_.point.x) > 0.001 ||
         fabs(state.odom_transform.p.y()-point_.point.y) > 0.001)
     {
-      point_.header.stamp = ros::Time::now();
+      point_.header.stamp = now;
       point_.point.x = state.odom_transform.p.x();
       point_.point.y = state.odom_transform.p.y();
-      publisher_.publish(point_);
+      publisher_->publish(point_);
     }
   }
 
 private:
-  ros::Publisher publisher_;
-  geometry_msgs::PointStamped point_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
+  geometry_msgs::msg::PointStamped point_;
 };
 
 /**
@@ -68,25 +68,25 @@ private:
 class SupportPolygonPublisher
 {
 public:
-  SupportPolygonPublisher(ros::NodeHandle nh)
+  SupportPolygonPublisher(rclcpp::Node::SharedPtr node)
   {
-    publisher_ = nh.advertise<geometry_msgs::PolygonStamped>("support_polygon", 10);
+    publisher_ = node->create_publisher<geometry_msgs::msg::PolygonStamped>("support_polygon", 10);
   }
   ~SupportPolygonPublisher() {}
   
-  bool publish(const RobotState& state, const KinematicsSolver& solver)
+  bool publish(const RobotState& state, const KinematicsSolver& solver, rclcpp::Time& now)
   {
     /* Do FK */
     KDL::Vector pose[4];
     if(!solver.solveFK(state, pose[0], pose[1], pose[2], pose[3]))
     {
-      ROS_WARN("Unable to solve FK");
+      //ROS_WARN("Unable to solve FK");
       return false;
     }
 
-    geometry_msgs::PolygonStamped ps;
+    geometry_msgs::msg::PolygonStamped ps;
     ps.header.frame_id = "body_link";
-    ps.header.stamp = ros::Time::now();
+    ps.header.stamp = now;
 
     /* Need to reorder these for a proper polygon */
     size_t order[] = {0, 2, 1, 3};
@@ -94,7 +94,7 @@ public:
     {
       if (state.leg_contact_likelihood[order[i]] > 0.5)
       {
-        geometry_msgs::Point32 point;
+        geometry_msgs::msg::Point32 point;
         point.x = pose[order[i]].x();
         point.y = pose[order[i]].y();
         point.z = pose[order[i]].z();
@@ -104,18 +104,18 @@ public:
 
     if (ps.polygon.points.size() < 3)
     {
-      ROS_WARN("Not enough points for support polygon");
+      //ROS_WARN("Not enough points for support polygon");
       return false;
     }
 
-    publisher_.publish(ps);
+    publisher_->publish(ps);
     return true;
   }
 
 private:
-  ros::Publisher publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr publisher_;
 };
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_STABILITY_VISUALIZATION_H_
+#endif  // SMALDOG_STABILITY_VISUALIZATION_H

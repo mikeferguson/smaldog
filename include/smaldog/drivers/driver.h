@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Michael E. Ferguson.  All right reserved.
+ * Copyright (c) 2014-2024 Michael E. Ferguson.  All right reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,19 +16,21 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 
-#ifndef SMALDOG_DRIVERS_DRIVER_H_
-#define SMALDOG_DRIVERS_DRIVER_H_
+#ifndef SMALDOG_DRIVERS_DRIVER_H
+#define SMALDOG_DRIVERS_DRIVER_H
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 
-#include "smaldog/State.h"
+#include "smaldog/msg/state.hpp"
 #include "smaldog/drivers/trajectory_sampler.h"
 
 using boost::asio::ip::udp;
@@ -36,14 +38,19 @@ using boost::asio::ip::udp;
 namespace smaldog
 {
 
-class udp_driver
+class udp_driver : public rclcpp::Node
 {
 public:
   /** \brief Setup asio/ros interfaces */
-  udp_driver(boost::asio::io_service& io_service, ros::NodeHandle nh);
+  udp_driver(const rclcpp::NodeOptions & options);
 
   /** \brief This is the 100hz callback, send updates to the hardware. */
   void updateCallback(const boost::system::error_code& /*e*/);
+
+  boost::asio::io_service & getIoService()
+  {
+    return io_service_;
+  }
 
 private:
   /** \brief Start asynchronous recieve of data */
@@ -51,6 +58,8 @@ private:
 
   /** \brief Callback for boost::asio async reception. */
   void handle_receive(const boost::system::error_code& error, std::size_t bytes_transferred);
+
+  boost::asio::io_service io_service_;
 
   /* 100hz timer for sending updates to hardware */
   long milliseconds_;
@@ -63,13 +72,13 @@ private:
   std::string ip_address_;
 
   /* ROS publishers of state */
-  ros::Publisher imu_pub_;
-  ros::Publisher joint_state_pub_;
-  ros::Publisher robot_state_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+  rclcpp::Publisher<smaldog::msg::State>::SharedPtr robot_state_pub_;
 
   /* ROS messages to be published */
-  sensor_msgs::JointState joint_msg_;
-  smaldog::State state_msg_;
+  sensor_msgs::msg::JointState joint_msg_;
+  smaldog::msg::State state_msg_;
 
   /*
    * Specifications for converting from robot servo values to ROS values
@@ -79,11 +88,11 @@ private:
   std::vector<double> joint_scales_;
 
   /* ROS components for sampling position of whole body. */
-  boost::shared_ptr<TrajectorySampler> body_sampler_;
+  std::shared_ptr<TrajectorySampler> body_sampler_;
 
   // TODO: add laser tilt stage trajectory action
 };
 
 }  // namespace smaldog
 
-#endif  // SMALDOG_DRIVERS_DRIVER_H_
+#endif  // SMALDOG_DRIVERS_DRIVER_H
